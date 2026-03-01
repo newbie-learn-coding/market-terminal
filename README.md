@@ -24,7 +24,11 @@ and builds a linked knowledge graph — streamed live to a map-first workspace.
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
 </div>
+<div align="center">
+           
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen?style=flat-square)](https://demos.brightdata.com/market-terminal)
 
+</div>
 ---
 
 ## What It Does
