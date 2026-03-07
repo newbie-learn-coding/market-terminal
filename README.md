@@ -100,7 +100,7 @@ The core output is a **typed knowledge graph** — not a flat list of links.
 | `asset` | `BITCOIN`, `NVDA`, `DXY` |
 | `entity` | `Federal Reserve`, `BlackRock`, `MicroStrategy` |
 | `event` | `ETF Approval`, `Fed Rate Hike`, `Earnings Miss` |
-| `source` | `reuters.com`, `bloomberg.com`, `coindesk.com` |
+| `source` | `reuters.com`, `bloomberg.com`, `coindesk.com`, `forexfactory.com` |
 
 **Edge types**
 
