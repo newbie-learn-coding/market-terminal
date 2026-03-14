@@ -3,6 +3,18 @@ function envString(name: string, fallback = ''): string {
   return typeof v === 'string' ? v : fallback;
 }
 
+// Round-robin key rotation for comma-separated key lists
+let _keyIndex = 0;
+function rotateKey(envName: string): string {
+  const raw = envString(envName);
+  if (!raw) return '';
+  const keys = raw.split(',').map((k) => k.trim()).filter(Boolean);
+  if (keys.length <= 1) return raw;
+  const key = keys[_keyIndex % keys.length];
+  _keyIndex++;
+  return key;
+}
+
 function envBool(name: string, fallback = false): boolean {
   const v = envString(name);
   if (!v) return fallback;
@@ -26,7 +38,7 @@ export const env = {
   ai: {
     allowClientApiKeys: envBool('ALLOW_CLIENT_API_KEYS', false),
     openrouter: {
-      apiKey: envString('OPENROUTER_API_KEY'),
+      get apiKey() { return rotateKey('OPENROUTER_API_KEY'); },
       baseURL: envString('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
       model: envString('OPENROUTER_MODEL', 'google/gemini-3-flash-preview'),
       modelFast: envString('OPENROUTER_MODEL_FAST', ''),
