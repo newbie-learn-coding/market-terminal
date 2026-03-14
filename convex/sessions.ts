@@ -13,7 +13,10 @@ export const deleteExpired = internalMutation({
       .query("sessions")
       .withIndex("by_sessionId", (q) => q.eq("sessionId", sessionId))
       .first();
-    if (session) await ctx.db.delete(session._id);
+    if (session) {
+      if (session.published) return; // published reports are never deleted
+      await ctx.db.delete(session._id);
+    }
 
     const events = await ctx.db
       .query("sessionEvents")
@@ -127,5 +130,62 @@ export const list = query({
       results = results.filter((s) => s.status === args.status);
     }
     return results;
+  },
+});
+
+// ── Publishing ────────────────────────────────────────────────────────────────
+
+export const publish = mutation({
+  args: {
+    sessionId: v.string(),
+    slug: v.string(),
+    assetKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("sessions")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .first();
+    if (!row) throw new Error("Session not found");
+    if (row.status !== "ready") throw new Error("Session is not ready");
+    await ctx.db.patch(row._id, {
+      published: true,
+      slug: args.slug,
+      assetKey: args.assetKey,
+    });
+  },
+});
+
+export const getBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("sessions")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+  },
+});
+
+export const listPublished = query({
+  args: { limit: v.optional(v.float64()) },
+  handler: async (ctx, args) => {
+    const limit = (args.limit ?? 200) as number;
+    const all = await ctx.db.query("sessions").order("desc").take(limit * 3);
+    return all.filter((s) => s.published === true).slice(0, limit);
+  },
+});
+
+export const listByAsset = query({
+  args: {
+    assetKey: v.string(),
+    limit: v.optional(v.float64()),
+  },
+  handler: async (ctx, args) => {
+    const limit = (args.limit ?? 50) as number;
+    return await ctx.db
+      .query("sessions")
+      .withIndex("by_asset", (q) => q.eq("assetKey", args.assetKey).eq("status", "ready"))
+      .order("desc")
+      .take(limit);
   },
 });

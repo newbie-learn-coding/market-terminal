@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Search,
   Send,
+  Share,
   Sparkles,
   Video,
   X,
@@ -970,6 +971,8 @@ export function Terminal() {
   const [runMeta, setRunMeta] = useState<{ mode: 'fast' | 'deep'; provider: string } | null>(null);
   const [mode, setMode] = useState<'fast' | 'deep'>('fast');
   const [running, setRunning] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [lastQuestion, setLastQuestion] = useState<string | null>(null);
   const [queryQueue, setQueryQueue] = useState<QueryQueueItem[]>([]);
   const [scrapeQueue, setScrapeQueue] = useState<ScrapeQueueItem[]>([]);
@@ -2643,6 +2646,38 @@ export function Terminal() {
                   <RefreshCw className={cn('h-4 w-4', running ? 'animate-spin' : '')} />
                   Re-run
                 </Button>
+                {session && session.step === 'ready' && !running && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={publishing}
+                    className="h-8 border-white/12 bg-white/[0.03] px-3 text-[11px]"
+                    onClick={async () => {
+                      if (!session) return;
+                      setPublishing(true);
+                      try {
+                        const res = await fetch(apiPath('/api/sessions/publish'), {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ sessionId: session.id }),
+                        });
+                        if (!res.ok) throw new Error('Publish failed');
+                        const data = await res.json();
+                        const fullUrl = `${window.location.origin}${data.url}`;
+                        setPublishedUrl(fullUrl);
+                        try { await navigator.clipboard.writeText(fullUrl); } catch {}
+                        setTimeout(() => setPublishedUrl(null), 4000);
+                      } catch {
+                        // silent fail
+                      } finally {
+                        setPublishing(false);
+                      }
+                    }}
+                  >
+                    <Share className="h-4 w-4" />
+                    {publishedUrl ? 'Copied!' : publishing ? 'Sharing...' : 'Share'}
+                  </Button>
+                )}
               </div>
 
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

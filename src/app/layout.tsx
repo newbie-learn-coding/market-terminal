@@ -17,8 +17,20 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Bright Data Signal Terminal',
+  metadataBase: new URL('https://brightdata.com/market-terminal'),
+  title: {
+    default: 'Market Signal Terminal',
+    template: '%s | Market Signal Terminal',
+  },
   description: 'Conversational market intelligence with evidence-linked maps.',
+  openGraph: {
+    siteName: 'Market Signal Terminal',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 };
 
 export default function RootLayout({
