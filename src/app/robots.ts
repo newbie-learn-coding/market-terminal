@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/terminal', '/dashboard'],
       },
     ],
-    sitemap: 'https://brightdata.com/market-terminal/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://market-terminal.pixelscan.dev/market-terminal'}/sitemap.xml`,
   };
 }

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { getConvexClient, api } from '@/lib/convex/server';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://brightdata.com/market-terminal';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://market-terminal.pixelscan.dev/market-terminal';
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, changeFrequency: 'daily', priority: 1.0 },
