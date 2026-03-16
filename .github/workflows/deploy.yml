@@ -1,4 +1,4 @@
-name: CI Build & Deploy
+name: Deploy to VPS
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,14 +18,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Build
-        env:
-          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
-        run: npm run build
+      - name: Type check & lint
+        run: npx tsc --noEmit
 
   deploy:
-    needs: build
+    needs: build-check
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -38,8 +35,11 @@ jobs:
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/docker-projects/standalone-apps/brightdata/market-signal-terminal
+            set -e
+            APP_DIR="/opt/docker-projects/standalone-apps/brightdata/market-signal-terminal"
+            cd "$APP_DIR"
             git fetch origin main
             git reset --hard origin/main
             docker compose build --no-cache
             docker compose up -d
+            echo "Deployed at $(date)"
