@@ -49,7 +49,7 @@ export default async function AssetPage({ params }: Props) {
     name: `${capitalizedLabel} Market Signal Analysis`,
     description: `Aggregated market signals, sentiment trends and analysis for ${label}.`,
     creator: { '@type': 'Organization', name: 'Market Signal Terminal' },
-    distribution: [{ '@type': 'DataDownload', contentUrl: `https://brightdata.com/market-terminal/asset/${key}` }],
+    distribution: [{ '@type': 'DataDownload', contentUrl: `https://trendanalysis.ai/asset/${key}` }],
   };
 
   return (

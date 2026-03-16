@@ -109,7 +109,7 @@ export default async function TrendingPage() {
       '@type': 'ListItem',
       position: i + 1,
       name: asset.label.charAt(0).toUpperCase() + asset.label.slice(1),
-      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://market-terminal.pixelscan.dev/market-terminal'}/asset/${asset.assetKey}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://trendanalysis.ai'}/asset/${asset.assetKey}`,
     })),
   };
 

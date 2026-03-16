@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://market-terminal.pixelscan.dev/market-terminal'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://trendanalysis.ai'),
   title: {
     default: 'Market Signal Terminal',
     template: '%s | Market Signal Terminal',
