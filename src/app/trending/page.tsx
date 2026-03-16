@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { listPublished } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Trending Market Topics - Market Signal Analysis Today',
   description:

@@ -431,7 +431,7 @@ export function SessionDashboard() {
           <div className="lg:col-span-4">
             <Panel
               title="Sessions"
-              hint="Loaded from Convex (sessions + session_events)"
+              hint="Loaded from PostgreSQL (sessions + session_events)"
               icon={<LayoutDashboard className="h-4 w-4" />}
               actions={
                 <div className="flex items-center gap-2">

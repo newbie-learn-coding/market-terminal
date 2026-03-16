@@ -3709,7 +3709,7 @@ export function Terminal() {
       <Drawer
         open={traceOpen}
         title="Run Trace"
-        subtitle="Stored pipeline events (Convex)"
+        subtitle="Stored pipeline events (PostgreSQL)"
         onClose={() => setTraceOpen(false)}
       >
         {!session ? (

@@ -15,7 +15,7 @@ import { buildSignalTerminalImpactPrompt } from '@/prompts/signalTerminalImpact'
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Canonical pipeline phases reported to the client/Convex as the run progresses.
+// Canonical pipeline phases reported to the client/DB as the run progresses.
 type PipelineStep = 'idle' | 'plan' | 'search' | 'scrape' | 'extract' | 'link' | 'cluster' | 'render' | 'ready';
 
 type PerfMark = {

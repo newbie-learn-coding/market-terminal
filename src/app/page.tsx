@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import LandingClient from '@/components/landing/LandingClient';
 import { listPublished } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Market Signal Analyzer - Evidence-Based Market Research Tool',
   description:
