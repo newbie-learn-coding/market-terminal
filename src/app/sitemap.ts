@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/tools/evidence-graph`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/tools/news-analyzer`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/asset`, changeFrequency: 'daily', priority: 0.8 },
+    { url: `${baseUrl}/trending`, changeFrequency: 'daily', priority: 0.9 },
   ];
 
   const client = getConvexClient();

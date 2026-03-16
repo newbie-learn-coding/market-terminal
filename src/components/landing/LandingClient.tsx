@@ -24,7 +24,21 @@ const LANDING_EXAMPLES = [
   'Gold vs Bitcoin today: where is the strongest evidence?',
 ] as const;
 
-export default function LandingClient() {
+const SENTIMENT_DOT: Record<string, string> = {
+  bullish: 'bg-emerald-400',
+  bearish: 'bg-red-400',
+  mixed: 'bg-amber-400',
+  neutral: 'bg-white/40',
+};
+
+type TrendingTopic = {
+  assetKey: string;
+  label: string;
+  count: number;
+  sentiment: string | null;
+};
+
+export default function LandingClient({ trendingTopics = [] }: { trendingTopics?: TrendingTopic[] }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [typedHint, setTypedHint] = useState('');
@@ -136,6 +150,13 @@ export default function LandingClient() {
                   Dashboard
                 </Link>
                 <Link
+                  href="/trending"
+                  className="inline-flex h-9 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/74 transition hover:bg-white/[0.06]"
+                >
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Trending
+                </Link>
+                <Link
                   href="/how-it-works"
                   className="inline-flex h-9 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/74 transition hover:bg-white/[0.06]"
                 >
@@ -217,6 +238,30 @@ export default function LandingClient() {
                 </button>
               ))}
             </div>
+
+            {trendingTopics.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-2.5 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/48">
+                  <TrendingUp className="h-3.5 w-3.5 text-[var(--blue)]" />
+                  Trending Now
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {trendingTopics.map((t) => (
+                    <Link
+                      key={t.assetKey}
+                      href={`/asset/${t.assetKey}`}
+                      className="inline-flex h-8 items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-3 text-xs text-white/66 transition hover:bg-white/[0.06] hover:text-white/84"
+                    >
+                      {t.sentiment && (
+                        <span className={`h-1.5 w-1.5 rounded-full ${SENTIMENT_DOT[t.sentiment] ?? SENTIMENT_DOT.neutral}`} />
+                      )}
+                      {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
+                      <span className="text-white/30">{t.count}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">

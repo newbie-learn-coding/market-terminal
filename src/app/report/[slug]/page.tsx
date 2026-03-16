@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { getConvexClient, api } from '@/lib/convex/server';
 import { ReportHeader } from '@/components/report/ReportHeader';
@@ -66,6 +67,31 @@ export default async function ReportPage({ params }: Props) {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const pageUrl = `${basePath}/report/${slug}`;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const assetKey = (session as any).assetKey as string | undefined;
+  const assetLabel = assetKey
+    ? decodeURIComponent(assetKey).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    : null;
+
+  // Fetch related reports for the same asset
+  let relatedReports: { slug: string; topic: string; date: number }[] = [];
+  if (assetKey) {
+    const convex = getConvexClient();
+    if (convex) {
+      try {
+        const siblings = await convex.query(api.sessions.listByAsset, { assetKey, limit: 4 });
+        relatedReports = siblings
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((s: any) => s.slug && s.slug !== slug)
+          .slice(0, 3)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((s: any) => ({ slug: s.slug, topic: s.topic, date: s._creationTime }));
+      } catch {
+        // Non-critical — skip related reports
+      }
+    }
+  }
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -84,6 +110,19 @@ export default async function ReportPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-xs text-white/50">
+        <Link href="/" className="transition hover:text-white/70">Home</Link>
+        <span>&rsaquo;</span>
+        {assetKey && assetLabel ? (
+          <>
+            <Link href={`/asset/${assetKey}`} className="transition hover:text-white/70">{assetLabel}</Link>
+            <span>&rsaquo;</span>
+          </>
+        ) : null}
+        <span className="text-white/35">Report</span>
+      </nav>
 
       <ReportHeader
         topic={session.topic}
@@ -106,6 +145,37 @@ export default async function ReportPage({ params }: Props) {
       {tape.length > 0 && <StaticTimeline items={tape} />}
 
       <EvidenceList evidence={evidence} />
+
+      {/* Related reports for same asset */}
+      {assetKey && assetLabel && (
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white/80">More {assetLabel} Analyses</h3>
+            <Link
+              href={`/asset/${assetKey}`}
+              className="text-xs text-[rgba(120,196,255,0.85)] transition hover:text-white/80"
+            >
+              View all &rarr;
+            </Link>
+          </div>
+          {relatedReports.length > 0 ? (
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {relatedReports.map((r) => (
+                <Link
+                  key={r.slug}
+                  href={`/report/${r.slug}`}
+                  className="rounded-xl border border-white/8 bg-white/[0.02] p-3 transition hover:border-white/15 hover:bg-white/[0.04]"
+                >
+                  <div className="text-xs font-medium text-white/75">{r.topic}</div>
+                  <div className="mt-1 text-[10px] text-white/40">{new Date(r.date).toLocaleDateString()}</div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-white/40">This is the only analysis for this asset so far.</p>
+          )}
+        </section>
+      )}
 
       <ShareBar
         url={pageUrl}
