@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { listPublished } from '@/lib/db';
 
 export const metadata: Metadata = {
   title: 'Trending Market Topics - Market Signal Analysis Today',
@@ -38,22 +38,18 @@ type RecentReport = {
 };
 
 export default async function TrendingPage() {
-  const client = getConvexClient();
-
   let assets: AssetCard[] = [];
   let recentReports: RecentReport[] = [];
 
-  if (client) {
-    const sessions = await client.query(api.sessions.listPublished, {});
+  {
+    const sessions = await listPublished();
     const grouped = new Map<string, { count: number; latestDate: number; latestSentiment: string | null }>();
 
-    for (const session of sessions) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const s = session as any;
+    for (const s of sessions) {
       const ak = s.assetKey as string | undefined;
       if (!ak) continue;
 
-      const evidence = s.meta?.artifacts?.evidence ?? [];
+      const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
       let sentiment: string | null = null;
       for (const ev of evidence) {
         if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
@@ -84,19 +80,16 @@ export default async function TrendingPage() {
 
     // Recent reports — last 12 published sessions by date
     recentReports = sessions
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((s: any) => s.slug)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .sort((a: any, b: any) => b._creationTime - a._creationTime)
+      .filter((s) => s.slug)
+      .sort((a, b) => b._creationTime - a._creationTime)
       .slice(0, 12)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((s: any) => {
-        const evidence = s.meta?.artifacts?.evidence ?? [];
+      .map((s) => {
+        const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
         let sentiment: string | null = null;
         for (const ev of evidence) {
           if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
         }
-        return { slug: s.slug, topic: s.topic, date: s._creationTime, sentiment };
+        return { slug: s.slug!, topic: s.topic, date: s._creationTime, sentiment };
       });
   }
 

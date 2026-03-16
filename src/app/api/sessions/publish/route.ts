@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getConvexClient, api } from '@/lib/convex/server';
+import { hasDb, getSession, publishSession } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -51,9 +51,8 @@ function generateSlug(topic: string, sessionId: string): string {
 }
 
 export async function POST(request: Request) {
-  const convex = getConvexClient();
-  if (!convex) {
-    return NextResponse.json({ error: 'Convex not configured' }, { status: 503 });
+  if (!hasDb()) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
   }
 
   const body = await request.json();
@@ -64,7 +63,7 @@ export async function POST(request: Request) {
 
   const { sessionId } = parsed.data;
 
-  const session = await convex.query(api.sessions.get, { sessionId });
+  const session = await getSession(sessionId);
   if (!session) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
   const slug = generateSlug(session.topic, sessionId);
   const assetKey = normalizeAssetKey(session.topic);
 
-  await convex.mutation(api.sessions.publish, { sessionId, slug, assetKey });
+  await publishSession(sessionId, slug, assetKey);
 
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   return NextResponse.json({

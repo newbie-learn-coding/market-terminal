@@ -59,8 +59,8 @@ export const env = {
   },
 };
 
-export function hasConvex() {
-  return Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
+export function hasDb() {
+  return Boolean(process.env.DATABASE_URL);
 }
 
 export function hasBrightData() {

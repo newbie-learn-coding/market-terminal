@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
-import { env, hasBrightData, hasConvex } from '@/lib/env';
+import { env, hasBrightData, hasDb } from '@/lib/env';
 import { getAIConfig, chatJson } from '@/lib/ai';
 import { brightDataRequestMarkdown, brightDataSerpGoogle, type SerpResult } from '@/lib/brightdata';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { createSession, updateStep as dbUpdateStep, updateStatus, insertEvent } from '@/lib/db';
 import { createLogger } from '@/lib/log';
 import { selectStageModel } from '@/lib/modelRouting';
 import type { GraphEdge, GraphNode } from '@/components/terminal/types';
@@ -2157,25 +2157,25 @@ export async function POST(request: Request) {
     provider,
     serpFormat,
     hasBrightData: hasBrightData(),
-    hasConvex: hasConvex(),
+    hasDb: hasDb(),
   });
 
-  const convex = getConvexClient();
+  const dbReady = hasDb();
 
-  if (convex) {
+  if (dbReady) {
     try {
-      await convex.mutation(api.sessions.create, {
+      await createSession(
         sessionId,
-        topic: body.topic,
-        status: 'running',
-        step: 'plan',
-        progress: 0.05,
-        meta: { mode: body.mode, provider, model: body.model || null },
-      });
-      log.info('run.convex.session_inserted', { sessionId });
+        body.topic,
+        'running',
+        'plan',
+        0.05,
+        { mode: body.mode, provider, model: body.model || null },
+      );
+      log.info('run.db.session_inserted', { sessionId });
     } catch {
       // ignore; still stream
-      log.warn('run.convex.session_insert_failed', { sessionId });
+      log.warn('run.db.session_insert_failed', { sessionId });
     }
   }
 
@@ -2190,10 +2190,9 @@ export async function POST(request: Request) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const persistEvent = (type: string, payload: unknown) => {
-        if (!convex) return;
-        void convex
-          .mutation(api.sessionEvents.insert, { sessionId, type, payload })
-          .catch((e: any) => log.debug('run.convex.event_insert_failed', { sessionId, type, error: String(e) }));
+        if (!dbReady) return;
+        void insertEvent(sessionId, type, payload)
+          .catch((e: any) => log.debug('run.db.event_insert_failed', { sessionId, type, error: String(e) }));
       };
 
       const send = (event: string, data: unknown) => {
@@ -2228,9 +2227,9 @@ export async function POST(request: Request) {
       };
 
       const updateSession = async (step: PipelineStep, progress: number, meta?: Record<string, unknown>) => {
-        if (!convex) return;
+        if (!dbReady) return;
         try {
-          await convex.mutation(api.sessions.updateStep, { sessionId, step, progress, meta });
+          await dbUpdateStep(sessionId, step, progress, meta);
         } catch {
           // ignore
         }
@@ -2362,7 +2361,7 @@ export async function POST(request: Request) {
         mode: body.mode,
         provider,
         hasBrightData: hasBrightData(),
-        hasConvex: hasConvex(),
+        hasDb: hasDb(),
       });
       diag('run.init', {
         topic: truncateText(body.topic, 120),
@@ -2752,8 +2751,8 @@ export async function POST(request: Request) {
         };
         await emitStep('ready', 1, readyMeta);
 
-        if (convex) {
-          await convex.mutation(api.sessions.updateStatus, { sessionId, status: 'ready' }).catch(() => {});
+        if (dbReady) {
+          await updateStatus(sessionId, 'ready').catch(() => {});
         }
 
         const perfSummary = finalizePerfSummary('ready');
@@ -2770,8 +2769,8 @@ export async function POST(request: Request) {
         send('error', { message: msg });
         diag('run.error', { message: truncateText(msg, 220), totalMs: perfSummary.totalMs });
         log.error('run.error', { sessionId, message: msg, ms: Date.now() - startedAt, perf: perfSummary });
-        if (convex) {
-          await convex.mutation(api.sessions.updateStatus, { sessionId, status: 'error' }).catch(() => {});
+        if (dbReady) {
+          await updateStatus(sessionId, 'error').catch(() => {});
         }
       } finally {
         controller.close();

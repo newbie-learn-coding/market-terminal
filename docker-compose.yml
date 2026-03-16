@@ -10,7 +10,8 @@ services:
     environment:
       - NODE_ENV=production
     networks:
-      - app-network
+      - proxy-tier
+      - supabase-tier
     logging:
       driver: "json-file"
       options:
@@ -18,5 +19,9 @@ services:
         max-file: "3"
 
 networks:
-  app-network:
+  proxy-tier:
     external: true
+    name: nginx-proxy_default
+  supabase-tier:
+    external: true
+    name: supabase_default

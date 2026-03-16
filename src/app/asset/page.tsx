@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { listPublished } from '@/lib/db';
 
 export const metadata: Metadata = {
   title: 'Market Signals Dashboard - Asset Analysis Index',
@@ -23,51 +23,42 @@ type AssetCard = {
 };
 
 export default async function AssetIndexPage() {
-  const client = getConvexClient();
+  const sessions = await listPublished();
+  const grouped = new Map<string, { count: number; latestDate: number; latestSentiment: string | null }>();
 
-  let assets: AssetCard[] = [];
+  for (const s of sessions) {
+    const ak = s.assetKey as string | undefined;
+    if (!ak) continue;
 
-  if (client) {
-    const sessions = await client.query(api.sessions.listPublished, {});
-    const grouped = new Map<string, { count: number; latestDate: number; latestSentiment: string | null }>();
-
-    for (const session of sessions) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const s = session as any;
-      const ak = s.assetKey as string | undefined;
-      if (!ak) continue;
-
-      const existing = grouped.get(ak);
-      if (!existing) {
-        // Find latest sentiment from evidence
-        const evidence = s.meta?.artifacts?.evidence ?? [];
-        let sentiment: string | null = null;
+    const existing = grouped.get(ak);
+    if (!existing) {
+      const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
+      let sentiment: string | null = null;
+      for (const ev of evidence) {
+        if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
+      }
+      grouped.set(ak, { count: 1, latestDate: s._creationTime, latestSentiment: sentiment });
+    } else {
+      existing.count += 1;
+      if (s._creationTime > existing.latestDate) {
+        existing.latestDate = s._creationTime;
+        const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
         for (const ev of evidence) {
-          if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
-        }
-        grouped.set(ak, { count: 1, latestDate: s._creationTime, latestSentiment: sentiment });
-      } else {
-        existing.count += 1;
-        if (s._creationTime > existing.latestDate) {
-          existing.latestDate = s._creationTime;
-          const evidence = s.meta?.artifacts?.evidence ?? [];
-          for (const ev of evidence) {
-            if (ev.aiSummary?.sentiment) { existing.latestSentiment = ev.aiSummary.sentiment; break; }
-          }
+          if (ev.aiSummary?.sentiment) { existing.latestSentiment = ev.aiSummary.sentiment; break; }
         }
       }
     }
-
-    assets = Array.from(grouped.entries())
-      .sort((a, b) => b[1].latestDate - a[1].latestDate)
-      .map(([assetKey, data]) => ({
-        assetKey,
-        label: decodeURIComponent(assetKey).replace(/-/g, ' '),
-        count: data.count,
-        latestDate: data.latestDate,
-        latestSentiment: data.latestSentiment,
-      }));
   }
+
+  const assets = Array.from(grouped.entries())
+    .sort((a, b) => b[1].latestDate - a[1].latestDate)
+    .map(([assetKey, data]) => ({
+      assetKey,
+      label: decodeURIComponent(assetKey).replace(/-/g, ' '),
+      count: data.count,
+      latestDate: data.latestDate,
+      latestSentiment: data.latestSentiment,
+    }));
 
   return (
     <div className="min-h-screen">

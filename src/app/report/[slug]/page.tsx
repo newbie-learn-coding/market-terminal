@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { getConvexClient, api } from '@/lib/convex/server';
+import { getBySlug, listByAsset } from '@/lib/db';
 import { ReportHeader } from '@/components/report/ReportHeader';
 import { StaticMindMap } from '@/components/report/StaticMindMap';
 import { ClustersSummary } from '@/components/report/ClustersSummary';
@@ -14,15 +14,13 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-async function getSession(slug: string) {
-  const convex = getConvexClient();
-  if (!convex) return null;
-  return await convex.query(api.sessions.getBySlug, { slug });
+async function fetchSession(slug: string) {
+  return await getBySlug(slug);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const session = await getSession(slug);
+  const session = await fetchSession(slug);
   if (!session) return { title: 'Report not found' };
 
   const topic = session.topic;
@@ -50,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ReportPage({ params }: Props) {
   const { slug } = await params;
-  const session = await getSession(slug);
+  const session = await fetchSession(slug);
   if (!session || !session.published) notFound();
 
   const meta = (session.meta ?? {}) as Record<string, unknown>;
@@ -76,19 +74,14 @@ export default async function ReportPage({ params }: Props) {
   // Fetch related reports for the same asset
   let relatedReports: { slug: string; topic: string; date: number }[] = [];
   if (assetKey) {
-    const convex = getConvexClient();
-    if (convex) {
-      try {
-        const siblings = await convex.query(api.sessions.listByAsset, { assetKey, limit: 4 });
-        relatedReports = siblings
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .filter((s: any) => s.slug && s.slug !== slug)
-          .slice(0, 3)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((s: any) => ({ slug: s.slug, topic: s.topic, date: s._creationTime }));
-      } catch {
-        // Non-critical — skip related reports
-      }
+    try {
+      const siblings = await listByAsset(assetKey, 4);
+      relatedReports = siblings
+        .filter((s) => s.slug && s.slug !== slug)
+        .slice(0, 3)
+        .map((s) => ({ slug: s.slug!, topic: s.topic, date: s._creationTime }));
+    } catch {
+      // Non-critical — skip related reports
     }
   }
 

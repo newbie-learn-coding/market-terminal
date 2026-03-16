@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { hasConvex } from '@/lib/env';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { hasDb, getSession, listEvents } from '@/lib/db';
 import { createLogger } from '@/lib/log';
 
 export const runtime = 'nodejs';
@@ -29,20 +28,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing or invalid ?sessionId=' }, { status: 400 });
   }
 
-  if (!hasConvex()) {
-    log.warn('sessions.events.missing_convex', { ms: Date.now() - startedAt });
-    return NextResponse.json({ error: 'Convex not configured' }, { status: 400 });
-  }
-
-  const convex = getConvexClient();
-  if (!convex) {
-    log.warn('sessions.events.missing_convex_client', { ms: Date.now() - startedAt });
-    return NextResponse.json({ error: 'Convex not configured' }, { status: 400 });
+  if (!hasDb()) {
+    log.warn('sessions.events.missing_db', { ms: Date.now() - startedAt });
+    return NextResponse.json({ error: 'Database not configured' }, { status: 400 });
   }
 
   const { sessionId, limit } = parsed.data;
 
-  const session = await convex.query(api.sessions.get, { sessionId });
+  const session = await getSession(sessionId);
   if (!session) {
     log.warn('sessions.events.session_not_found', { sessionId, ms: Date.now() - startedAt });
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
@@ -50,7 +43,7 @@ export async function GET(request: Request) {
 
   let events: any[];
   try {
-    events = await convex.query(api.sessionEvents.list, { sessionId, limit });
+    events = await listEvents(sessionId, limit);
   } catch (e: any) {
     log.error('sessions.events.events_fetch_failed', { sessionId, error: e?.message, ms: Date.now() - startedAt });
     return NextResponse.json({ error: e?.message || 'fetch failed' }, { status: 500 });

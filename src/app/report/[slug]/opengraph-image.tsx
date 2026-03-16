@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-import { getConvexClient, api } from '@/lib/convex/server';
+import { getBySlug } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const alt = 'Market Signal Report';
@@ -17,22 +17,19 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
   let clusterCount = 0;
 
   try {
-    const convex = getConvexClient();
-    if (convex) {
-      const session = await convex.query(api.sessions.getBySlug, { slug });
-      if (session) {
-        topic = session.topic;
-        date = new Date(session._creationTime).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-        const meta = (session.meta ?? {}) as Record<string, unknown>;
-        const arts = (meta.artifacts ?? {}) as Record<string, unknown>;
-        evidenceCount = Array.isArray(arts.evidence) ? arts.evidence.length : 0;
-        nodeCount = Array.isArray(arts.nodes) ? arts.nodes.length : 0;
-        clusterCount = Array.isArray(arts.clusters) ? arts.clusters.length : 0;
-      }
+    const session = await getBySlug(slug);
+    if (session) {
+      topic = session.topic;
+      date = new Date(session._creationTime).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      const meta = (session.meta ?? {}) as Record<string, unknown>;
+      const arts = (meta.artifacts ?? {}) as Record<string, unknown>;
+      evidenceCount = Array.isArray(arts.evidence) ? arts.evidence.length : 0;
+      nodeCount = Array.isArray(arts.nodes) ? arts.nodes.length : 0;
+      clusterCount = Array.isArray(arts.clusters) ? arts.clusters.length : 0;
     }
   } catch {
     // fallback to defaults

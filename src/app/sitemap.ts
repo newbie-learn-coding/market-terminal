@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { listPublished } from '@/lib/db';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://trendanalysis.ai';
@@ -14,17 +14,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/trending`, changeFrequency: 'daily', priority: 0.9 },
   ];
 
-  const client = getConvexClient();
-  if (!client) {
-    return staticPages;
-  }
-
   try {
-    const published = await client.query(api.sessions.listPublished, {});
+    const published = await listPublished();
 
     const reportPages: MetadataRoute.Sitemap = published
-      .filter((s: { slug?: string }) => s.slug)
-      .map((s: { slug?: string }) => ({
+      .filter((s) => s.slug)
+      .map((s) => ({
         url: `${baseUrl}/report/${s.slug}`,
         changeFrequency: 'monthly' as const,
         priority: 0.7,
@@ -32,9 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const assetKeys = new Set<string>();
     for (const s of published) {
-      if ((s as { assetKey?: string }).assetKey) {
-        assetKeys.add((s as { assetKey?: string }).assetKey!);
-      }
+      if (s.assetKey) assetKeys.add(s.assetKey);
     }
     const assetPages: MetadataRoute.Sitemap = Array.from(assetKeys).map((key) => ({
       url: `${baseUrl}/asset/${key}`,

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { listByAsset } from '@/lib/db';
 import { aggregateAssetData } from '@/lib/asset-aggregation';
 
 type Props = { params: Promise<{ key: string }> };
@@ -32,10 +32,8 @@ const MOMENTUM_COLORS: Record<string, string> = {
 
 export default async function AssetPage({ params }: Props) {
   const { key } = await params;
-  const client = getConvexClient();
-  if (!client) notFound();
 
-  const sessions = await client.query(api.sessions.listByAsset, { assetKey: key });
+  const sessions = await listByAsset(key);
   if (!sessions || sessions.length === 0) notFound();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

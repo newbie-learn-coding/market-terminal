@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { createAIClient, getAIConfig } from '@/lib/ai';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { hasDb, getSession as dbGetSession, insertEvent, insertEventBatch } from '@/lib/db';
 import { createLogger } from '@/lib/log';
 import { selectStageModel } from '@/lib/modelRouting';
 import { buildSignalTerminalChatPrompt } from '@/prompts/signalTerminalChat';
@@ -41,15 +41,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const convex = getConvexClient();
-  if (!convex) {
+  if (!hasDb()) {
     return NextResponse.json(
-      { error: 'Convex not configured (NEXT_PUBLIC_CONVEX_URL missing).' },
+      { error: 'Database not configured (DATABASE_URL missing).' },
       { status: 503 },
     );
   }
 
-  const sessionRow = await convex.query(api.sessions.get, { sessionId: body.sessionId });
+  const sessionRow = await dbGetSession(body.sessionId);
   if (!sessionRow) {
     log.warn('chat.session_not_found', { sessionId: body.sessionId });
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
@@ -151,11 +150,7 @@ export async function POST(request: Request) {
     });
 
     // Best-effort trace event for dashboard replay/debug.
-    await convex.mutation(api.sessionEvents.insert, {
-      sessionId: body.sessionId,
-      type: 'warn',
-      payload: { message: `Chat model call failed (${cfg.model}): ${message}` },
-    }).catch(() => {});
+    await insertEvent(body.sessionId, 'warn', { message: `Chat model call failed (${cfg.model}): ${message}` }).catch(() => {});
 
     return NextResponse.json(
       { error: `Chat model request failed (${cfg.model}). ${message}` },
@@ -167,31 +162,29 @@ export async function POST(request: Request) {
   const usage = (res as any).usage || {};
 
   // Persist to trace for demo/debug. (Best-effort)
-  await convex.mutation(api.sessionEvents.insertBatch, {
-    events: [
-      {
-        sessionId: body.sessionId,
-        type: 'chat.question',
-        payload: { content: truncateText(body.message, 900), focusEvidenceIds },
+  await insertEventBatch([
+    {
+      sessionId: body.sessionId,
+      type: 'chat.question',
+      payload: { content: truncateText(body.message, 900), focusEvidenceIds },
+    },
+    {
+      sessionId: body.sessionId,
+      type: 'ai.usage',
+      payload: {
+        model: cfg.model,
+        tag: 'chat',
+        prompt_tokens: usage.prompt_tokens ?? 0,
+        completion_tokens: usage.completion_tokens ?? 0,
+        total_tokens: usage.total_tokens ?? 0,
       },
-      {
-        sessionId: body.sessionId,
-        type: 'ai.usage',
-        payload: {
-          model: cfg.model,
-          tag: 'chat',
-          prompt_tokens: usage.prompt_tokens ?? 0,
-          completion_tokens: usage.completion_tokens ?? 0,
-          total_tokens: usage.total_tokens ?? 0,
-        },
-      },
-      {
-        sessionId: body.sessionId,
-        type: 'chat.answer',
-        payload: { content: truncateText(content, 1800) },
-      },
-    ],
-  }).catch(() => {});
+    },
+    {
+      sessionId: body.sessionId,
+      type: 'chat.answer',
+      payload: { content: truncateText(content, 1800) },
+    },
+  ]).catch(() => {});
 
   log.info('chat.ok', {
     sessionId: body.sessionId,

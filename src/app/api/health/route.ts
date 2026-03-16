@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { brightDataSerpZone, env, hasBrightData, hasConvex } from '@/lib/env';
+import { brightDataSerpZone, env, hasBrightData, hasDb } from '@/lib/env';
 import { createAIClient, getAIConfig } from '@/lib/ai';
 import { brightDataSerpGoogle } from '@/lib/brightdata';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { probeDb } from '@/lib/db';
 import { createLogger, maskSecret } from '@/lib/log';
 
 export const runtime = 'nodejs';
@@ -100,26 +100,6 @@ async function probeAI() {
   };
 }
 
-async function probeConvex() {
-  const client = getConvexClient();
-  if (!client) return { ok: false, error: 'missing-url' as const };
-
-  const startedAt = Date.now();
-  try {
-    const rows = await client.query(api.sessions.list, { limit: 1 });
-    return {
-      ok: true,
-      latencyMs: Date.now() - startedAt,
-      rows: rows.length,
-    };
-  } catch (e) {
-    return {
-      ok: false,
-      latencyMs: Date.now() - startedAt,
-      error: e instanceof Error ? e.message : String(e),
-    };
-  }
-}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -146,9 +126,8 @@ export async function GET(request: Request) {
         model: env.ai.openrouter.model,
         allowClientApiKeys: env.ai.allowClientApiKeys,
       },
-      convex: {
-        configured: hasConvex(),
-        url: process.env.NEXT_PUBLIC_CONVEX_URL || '',
+      db: {
+        configured: hasDb(),
       },
     },
   };
@@ -158,25 +137,25 @@ export async function GET(request: Request) {
     return NextResponse.json(base, { status: 200 });
   }
 
-  const [bright, serp, ai, convexProbe] = await Promise.allSettled([
+  const [bright, serp, ai, dbProbe] = await Promise.allSettled([
     probeBrightData(),
     probeBrightDataSerp(),
     probeAI(),
-    probeConvex(),
+    probeDb(),
   ]);
 
   const probes = {
     brightdata: bright.status === 'fulfilled' ? bright.value : { ok: false, error: String(bright.reason) },
     brightdataSerp: serp.status === 'fulfilled' ? serp.value : { ok: false, error: String(serp.reason) },
     ai: ai.status === 'fulfilled' ? ai.value : { ok: false, error: String(ai.reason) },
-    convex: convexProbe.status === 'fulfilled' ? convexProbe.value : { ok: false, error: String(convexProbe.reason) },
+    db: dbProbe.status === 'fulfilled' ? dbProbe.value : { ok: false, error: String(dbProbe.reason) },
   };
 
   const ok = Boolean(
     (probes.brightdata as any).ok &&
       (probes.brightdataSerp as any).ok &&
       (probes.ai as any).ok &&
-      (probes.convex as any).ok,
+      (probes.db as any).ok,
   );
 
   log.info('health.probe', { ok, probes, ms: Date.now() - startedAt });

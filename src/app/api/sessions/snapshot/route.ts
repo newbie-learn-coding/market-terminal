@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { hasConvex } from '@/lib/env';
-import { getConvexClient, api } from '@/lib/convex/server';
+import { hasDb, getSession, patchMeta, insertEventBatch } from '@/lib/db';
 import { createLogger } from '@/lib/log';
 
 export const runtime = 'nodejs';
@@ -34,20 +33,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid request' }, { status: 400 });
   }
 
-  if (!hasConvex()) {
-    log.warn('sessions.snapshot.missing_convex', { ms: Date.now() - startedAt });
-    return NextResponse.json({ error: 'Convex not configured' }, { status: 400 });
-  }
-
-  const convex = getConvexClient();
-  if (!convex) {
-    log.warn('sessions.snapshot.missing_convex_client', { ms: Date.now() - startedAt });
-    return NextResponse.json({ error: 'Convex not configured' }, { status: 400 });
+  if (!hasDb()) {
+    log.warn('sessions.snapshot.missing_db', { ms: Date.now() - startedAt });
+    return NextResponse.json({ error: 'Database not configured' }, { status: 400 });
   }
 
   const { sessionId, price, videos } = parsed.data;
 
-  const session = await convex.query(api.sessions.get, { sessionId });
+  const session = await getSession(sessionId);
   if (!session) {
     log.warn('sessions.snapshot.session_not_found', { sessionId });
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
@@ -59,7 +52,7 @@ export async function POST(request: Request) {
   if (videos !== undefined) nextArtifacts.videos = videos;
 
   try {
-    await convex.mutation(api.sessions.patchMeta, { sessionId, metaPatch: { artifacts: nextArtifacts } });
+    await patchMeta(sessionId, { artifacts: nextArtifacts });
   } catch (e: any) {
     log.error('sessions.snapshot.update_failed', { sessionId, error: e?.message, ms: Date.now() - startedAt });
     return NextResponse.json({ error: e?.message || 'update failed' }, { status: 500 });
@@ -70,7 +63,7 @@ export async function POST(request: Request) {
   if (videos !== undefined) events.push({ sessionId, type: 'videos.snapshot', payload: videos });
 
   if (events.length) {
-    await convex.mutation(api.sessionEvents.insertBatch, { events }).catch((e: any) => {
+    await insertEventBatch(events).catch((e: any) => {
       log.warn('sessions.snapshot.event_insert_failed', { sessionId, error: e?.message });
     });
   }
