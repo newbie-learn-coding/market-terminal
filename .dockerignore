@@ -8,3 +8,7 @@ CLAUDE.md
 .claude/
 *.md
 !README.md
+open-next.config.ts
+wrangler.jsonc
+.open-next
+.wrangler

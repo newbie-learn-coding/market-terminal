@@ -1,8 +1,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "trendanalysis-ai",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2025-04-01",
-  "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": ".open-next/assets",
+  "compatibility_flags": ["nodejs_compat_v2"],
+  "assets": {
+    "directory": ".open-next/assets"
+  },
+  "vars": {
+    "BRIGHTDATA_WEB_UNLOCKER_ZONE": "mcp_unlocker",
+    "BRIGHTDATA_SERP_ZONE": "serp_api1",
+    "OPENROUTER_MODEL": "google/gemini-3-flash-preview",
+    "ALLOW_CLIENT_API_KEYS": "true",
+    "NEXT_PUBLIC_SITE_URL": "https://trendanalysis.ai"
+  },
   "observability": { "enabled": true }
 }
