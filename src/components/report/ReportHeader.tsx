@@ -1,4 +1,4 @@
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/Badge';
 
@@ -16,6 +16,7 @@ export async function ReportHeader({
   stats: { evidence: number; nodes: number; edges: number; clusters: number };
 }) {
   const locale = await getLocale();
+  const t = await getTranslations('report');
   const fmtDate = new Date(date).toLocaleDateString(LOCALE_MAP[locale] ?? 'en-US', {
     year: 'numeric',
     month: 'long',
@@ -31,17 +32,17 @@ export async function ReportHeader({
             <p className="mt-1 text-sm text-white/50">{fmtDate}</p>
           </div>
           <Badge variant={mode === 'deep' ? 'teal' : 'blue'}>
-            {mode.toUpperCase()} MODE
+            {mode.toUpperCase()} {t('mode')}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="pt-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: 'Evidence', value: stats.evidence },
-            { label: 'Nodes', value: stats.nodes },
-            { label: 'Edges', value: stats.edges },
-            { label: 'Clusters', value: stats.clusters },
+            { label: t('evidence'), value: stats.evidence },
+            { label: t('nodes'), value: stats.nodes },
+            { label: t('edges'), value: stats.edges },
+            { label: t('clusters'), value: stats.clusters },
           ].map((s) => (
             <div
               key={s.label}

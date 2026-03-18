@@ -8,22 +8,23 @@ import {
   Share,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { cn, apiPath } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import type { PipelineStep } from '@/components/terminal/PipelineTimeline';
 
-const STEP_LABEL: Record<PipelineStep, string> = {
-  idle: 'Waiting',
-  plan: 'Planning',
-  search: 'Searching',
-  scrape: 'Scraping',
-  extract: 'Extracting',
-  link: 'Linking',
-  cluster: 'Clustering',
-  render: 'Rendering',
-  ready: 'Ready',
+const STEP_KEY: Record<PipelineStep, string> = {
+  idle: 'stepIdle',
+  plan: 'stepPlan',
+  search: 'stepSearch',
+  scrape: 'stepScrape',
+  extract: 'stepExtract',
+  link: 'stepLink',
+  cluster: 'stepCluster',
+  render: 'stepRender',
+  ready: 'stepReady',
 };
 
 export function TerminalHeader({
@@ -53,7 +54,10 @@ export function TerminalHeader({
   pipelineContent: ReactNode;
   searchBarContent: ReactNode;
 }) {
-  const stepLabel = STEP_LABEL[step];
+  const t = useTranslations('terminal');
+  const nav = useTranslations('nav');
+  const common = useTranslations('common');
+  const stepLabel = t(STEP_KEY[step]);
 
   return (
     <header className="relative z-10">
@@ -67,20 +71,20 @@ export function TerminalHeader({
                   href="/"
                   className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-[11px] font-semibold text-white/68 transition hover:bg-white/[0.06]"
                 >
-                  Home
+                  {common('home')}
                 </Link>
                 <Link
                   href="/terminal"
                   className="inline-flex h-8 items-center rounded-full border border-[rgba(0,102,255,0.38)] bg-[rgba(0,102,255,0.14)] px-3 text-[11px] font-semibold text-[rgba(174,212,255,0.96)]"
                 >
-                  Terminal
+                  {nav('terminal')}
                 </Link>
                 <Link
                   href="/dashboard"
                   className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-[11px] font-semibold text-white/68 transition hover:bg-white/[0.06]"
                   title="View stored sessions"
                 >
-                  Dashboard
+                  {nav('dashboard')}
                 </Link>
                 <Link
                   href="/how-it-works"
@@ -88,7 +92,7 @@ export function TerminalHeader({
                   title="Architecture and docs"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
-                  Architecture
+                  {nav('architecture')}
                 </Link>
               </div>
               <div className="flex items-center gap-2">
@@ -100,7 +104,7 @@ export function TerminalHeader({
                   className="h-8 border-white/12 bg-white/[0.03] px-3 text-[11px]"
                 >
                   <RefreshCw className={cn('h-4 w-4', running ? 'animate-spin' : '')} />
-                  Re-run
+                  {t('rerun')}
                 </Button>
                 {session && session.step === 'ready' && !running && (
                   <Button
@@ -111,7 +115,7 @@ export function TerminalHeader({
                     onClick={onPublish}
                   >
                     <Share className="h-4 w-4" />
-                    {publishedUrl ? 'Copied!' : publishing ? 'Sharing...' : 'Share'}
+                    {publishedUrl ? common('copied') : publishing ? t('sharing') : common('share')}
                   </Button>
                 )}
               </div>
@@ -128,7 +132,7 @@ export function TerminalHeader({
                 </div>
                 <div className="hidden items-center gap-2 lg:flex">
                   <div className="h-2 w-2 rounded-full bg-[var(--teal)] shadow-[0_0_0_5px_rgba(20,184,166,0.12)]" />
-                  <div className="text-xs text-white/55">Session: {stepLabel}</div>
+                  <div className="text-xs text-white/55">{t('session')}: {stepLabel}</div>
                 </div>
               </div>
 
@@ -150,12 +154,14 @@ export function TerminalHeader({
 
               {snapshotMode ? (
                 <div className="mt-2 text-xs text-[rgba(173,212,255,0.9)]">
-                  Snapshot loaded from history. No automatic refresh is running.
+                  {t('snapshotLoaded')}
                 </div>
               ) : null}
               {warnings.length ? (
                 <div className="mt-2 text-xs text-[rgba(255,190,125,0.9)]">
-                  {warnings.length} warning{warnings.length === 1 ? '' : 's'}
+                  {warnings.length === 1
+                    ? t('warnings', { count: warnings.length })
+                    : t('warningsPlural', { count: warnings.length })}
                 </div>
               ) : null}
             </div>

@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, key } = await params;
   setRequestLocale(locale);
   const label = decodeURIComponent(key).replace(/-/g, ' ');
-  const title = `${label.charAt(0).toUpperCase() + label.slice(1)} Trend Analysis & History | TrendAnalysis.ai`;
+  const title = `${label.charAt(0).toUpperCase() + label.slice(1)} Trend Analysis & History`;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://trendanalysis.ai';
 
   return {

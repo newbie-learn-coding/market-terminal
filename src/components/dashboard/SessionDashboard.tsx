@@ -3,6 +3,7 @@
 import { Link } from '@/i18n/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowLeft, Copy, LayoutDashboard, RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { cn, apiPath } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
@@ -244,6 +245,9 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export function SessionDashboard() {
+  const t = useTranslations('dashboard');
+  const nav = useTranslations('nav');
+
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -258,8 +262,8 @@ export function SessionDashboard() {
 
   useEffect(() => {
     if (!copiedKey) return;
-    const t = window.setTimeout(() => setCopiedKey(null), 1200);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setCopiedKey(null), 1200);
+    return () => window.clearTimeout(timer);
   }, [copiedKey]);
 
   const fetchSessions = useCallback(async () => {
@@ -362,7 +366,7 @@ export function SessionDashboard() {
     const edgeTypes = new Map<string, { label: string; count: number }>();
     const tapeTags = new Map<string, { label: string; count: number }>();
     const entities = new Map<string, { label: string; count: number }>();
-    const catalysts = new Map<string, { label: string; count: number }>();
+    const catalystMap = new Map<string, { label: string; count: number }>();
     const media = new Map<string, { label: string; count: number }>();
 
     for (const node of nodes) {
@@ -381,7 +385,7 @@ export function SessionDashboard() {
       const summaryEntities = Array.isArray(aiSummary.entities) ? aiSummary.entities : [];
       const summaryCatalysts = Array.isArray(aiSummary.catalysts) ? aiSummary.catalysts : [];
       for (const entity of summaryEntities) bumpCount(entities, entity, 1);
-      for (const catalyst of summaryCatalysts) bumpCount(catalysts, catalyst, 1);
+      for (const catalyst of summaryCatalysts) bumpCount(catalystMap, catalyst, 1);
     }
     for (const item of videos) {
       bumpCount(media, item?.platform || item?.provider, 1);
@@ -393,7 +397,7 @@ export function SessionDashboard() {
       { label: 'Edges', tags: takeTopTags(edgeTypes, 6) },
       { label: 'Tape', tags: takeTopTags(tapeTags, 8) },
       { label: 'Entities', tags: takeTopTags(entities, 8) },
-      { label: 'Catalysts', tags: takeTopTags(catalysts, 8) },
+      { label: 'Catalysts', tags: takeTopTags(catalystMap, 8) },
       { label: 'Media', tags: takeTopTags(media, 6) },
     ].filter((group) => group.tags.length > 0);
   }, [edges, evidence, nodes, tape, videos]);
@@ -410,18 +414,18 @@ export function SessionDashboard() {
             <Link href="/terminal">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4" />
-                Terminal
+                {nav('terminal')}
               </Button>
             </Link>
             <Separator orientation="vertical" className="hidden h-6 sm:block" />
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">Sessions</p>
-              <h1 className="text-lg font-semibold text-white/90">Dashboard</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">{t('sessions')}</p>
+              <h1 className="text-lg font-semibold text-white/90">{nav('dashboard')}</h1>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/how-it-works">
-              <Button variant="outline" size="sm">Architecture</Button>
+              <Button variant="outline" size="sm">{nav('architecture')}</Button>
             </Link>
             <Button
               variant="outline"
@@ -430,7 +434,7 @@ export function SessionDashboard() {
               disabled={loading}
             >
               <RefreshCw className={cn('h-4 w-4', loading ? 'animate-spin' : '')} />
-              Refresh
+              {t('refresh')}
             </Button>
           </div>
         </div>
@@ -444,13 +448,13 @@ export function SessionDashboard() {
               <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
                 <div className="flex items-center gap-2">
                   <LayoutDashboard className="h-4 w-4 text-white/50" />
-                  <CardTitle>Sessions</CardTitle>
+                  <CardTitle>{t('sessions')}</CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Filter by topic..."
+                    placeholder={t('filterByTopic')}
                     className="h-8 w-[min(200px,40vw)] text-[12px]"
                   />
                   <Button
@@ -459,7 +463,7 @@ export function SessionDashboard() {
                     className="h-8 w-8"
                     onClick={() => void fetchSessions()}
                     disabled={loading}
-                    title="Refresh list"
+                    title={t('refresh')}
                   >
                     <RefreshCw className={cn('h-3.5 w-3.5', loading ? 'animate-spin' : '')} />
                   </Button>
@@ -475,11 +479,11 @@ export function SessionDashboard() {
                 {!sessions.length && !loading ? (
                   <EmptyState
                     icon={<LayoutDashboard className="h-8 w-8" />}
-                    title="No sessions yet"
-                    description="Run a topic in the terminal to populate history."
+                    title={t('noSessions')}
+                    description={t('noSessionsDesc')}
                     action={
                       <Link href="/terminal">
-                        <Button size="sm">Open Terminal</Button>
+                        <Button size="sm">{t('openTerminal')}</Button>
                       </Link>
                     }
                   />
@@ -534,7 +538,7 @@ export function SessionDashboard() {
                                 onClick={(e) => e.stopPropagation()}
                                 className="inline-flex items-center text-[11px] font-medium text-primary/80 hover:text-primary"
                               >
-                                Open snapshot &rarr;
+                                {t('openSnapshot')} &rarr;
                               </Link>
                             </div>
                           </button>
@@ -555,10 +559,10 @@ export function SessionDashboard() {
                   <Activity className="h-4 w-4 text-white/50" />
                   <div>
                     <CardTitle>
-                      {selectedSummary ? selectedSummary.topic : 'Session'}
+                      {selectedSummary ? selectedSummary.topic : t('sessions')}
                     </CardTitle>
                     <p className="mt-0.5 text-[11px] text-white/40 mono">
-                      {selectedId || 'Select a session'}
+                      {selectedId || t('selectSession')}
                     </p>
                   </div>
                 </div>
@@ -566,8 +570,8 @@ export function SessionDashboard() {
                   <div className="flex items-center gap-2">
                     <Tabs value={tab} onValueChange={setTab}>
                       <TabsList className="hidden sm:inline-flex">
-                        <TabsTrigger value="artifacts">Artifacts</TabsTrigger>
-                        <TabsTrigger value="trace">Trace</TabsTrigger>
+                        <TabsTrigger value="artifacts">{t('artifacts')}</TabsTrigger>
+                        <TabsTrigger value="trace">{t('trace')}</TabsTrigger>
                       </TabsList>
                     </Tabs>
                     <Button
@@ -577,13 +581,13 @@ export function SessionDashboard() {
                       disabled={detailLoading || !selectedId}
                     >
                       <RefreshCw className={cn('h-4 w-4', detailLoading ? 'animate-spin' : '')} />
-                      Refresh
+                      {t('refresh')}
                     </Button>
                     <Link
                       href={selectedId ? `/terminal?sessionId=${encodeURIComponent(selectedId)}` : '/terminal'}
                       className={!selectedId ? 'pointer-events-none opacity-50' : ''}
                     >
-                      <Button variant="outline" size="sm">Open snapshot</Button>
+                      <Button variant="outline" size="sm">{t('openSnapshot')}</Button>
                     </Link>
                   </div>
                 )}
@@ -598,8 +602,8 @@ export function SessionDashboard() {
                 {!selectedId ? (
                   <EmptyState
                     icon={<Activity className="h-8 w-8" />}
-                    title="Select a session"
-                    description="Pick a session to view stored artifacts and the pipeline trace."
+                    title={t('selectSession')}
+                    description={t('selectSessionDesc')}
                   />
                 ) : detailLoading && !detail ? (
                   <div className="space-y-3">
@@ -610,8 +614,8 @@ export function SessionDashboard() {
                 ) : !detail ? (
                   <EmptyState
                     icon={<Activity className="h-8 w-8" />}
-                    title="No session data"
-                    description="Could not load session data."
+                    title={t('noSessionData')}
+                    description={t('noSessionDataDesc')}
                   />
                 ) : (
                   <div className="space-y-5">
@@ -621,7 +625,7 @@ export function SessionDashboard() {
                         <div className="min-w-0">
                           <div className="mono text-[11px] font-semibold text-white/60">{detail.session.id}</div>
                           <div className="mt-1 text-[13px] text-white/75">
-                            Stored: <span className="mono text-white/85">{formatTime(detail.session.created_at)}</span>
+                            {t('stored')}: <span className="mono text-white/85">{formatTime(detail.session.created_at)}</span>
                           </div>
                           <div className="mt-1 text-[11px] text-white/40">
                             status <span className="mono text-white/65">{detail.session.status}</span> · step{' '}
@@ -639,7 +643,7 @@ export function SessionDashboard() {
                             }}
                           >
                             <Copy className="h-3.5 w-3.5" />
-                            {copiedKey === 'session.id' ? 'Copied' : 'Copy ID'}
+                            {copiedKey === 'session.id' ? t('copied') : t('copyId')}
                           </Button>
                           <Button
                             variant="ghost"
@@ -650,7 +654,7 @@ export function SessionDashboard() {
                             }}
                           >
                             <Copy className="h-3.5 w-3.5" />
-                            {copiedKey === 'session.meta' ? 'Copied' : 'Meta'}
+                            {copiedKey === 'session.meta' ? t('copied') : t('meta')}
                           </Button>
                         </div>
                       </div>
@@ -717,7 +721,7 @@ export function SessionDashboard() {
                         {perf && (
                           <Card className="p-4">
                             <div className="flex flex-wrap items-center gap-2 mb-4">
-                              <SectionLabel>Run Performance</SectionLabel>
+                              <SectionLabel>{t('runPerformance')}</SectionLabel>
                               <Badge variant="blue" className="mono">total {formatDuration(perf.totalMs)}</Badge>
                               <Stat label="marks" value={compact(perf.marksStored)} />
                               <Stat label="status" value={perf.status} />
@@ -726,7 +730,7 @@ export function SessionDashboard() {
                             <div className="space-y-3">
                               <details open className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
                                 <summary className="cursor-pointer text-[12px] font-semibold text-white/60">
-                                  Overall steps ({perfStepRows.length})
+                                  {t('overallSteps')} ({perfStepRows.length})
                                 </summary>
                                 <div className="mt-3 space-y-2">
                                   {perfStepRows.length ? (
@@ -746,14 +750,14 @@ export function SessionDashboard() {
                                       </div>
                                     ))
                                   ) : (
-                                    <p className="text-[12px] text-white/45">No step timings stored.</p>
+                                    <p className="text-[12px] text-white/45">{t('noStepTimings')}</p>
                                   )}
                                 </div>
                               </details>
 
                               <details className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
                                 <summary className="cursor-pointer text-[12px] font-semibold text-white/60">
-                                  API timings ({perfApiRows.length})
+                                  {t('apiTimings')} ({perfApiRows.length})
                                 </summary>
                                 <div className="mt-3 space-y-2">
                                   {perfApiRows.length ? (
@@ -771,7 +775,7 @@ export function SessionDashboard() {
                                       </div>
                                     ))
                                   ) : (
-                                    <p className="text-[12px] text-white/45">No API timings stored.</p>
+                                    <p className="text-[12px] text-white/45">{t('noApiTimings')}</p>
                                   )}
                                 </div>
                               </details>
@@ -782,7 +786,7 @@ export function SessionDashboard() {
                         {/* Map Tags */}
                         {detailMapTagGroups.length > 0 && (
                           <Card className="p-4">
-                            <SectionLabel className="mb-3">Evidence Map Tags</SectionLabel>
+                            <SectionLabel className="mb-3">{t('evidenceMapTags')}</SectionLabel>
                             <div className="space-y-3">
                               {detailMapTagGroups.map((group) => (
                                 <div key={group.label} className="flex flex-wrap items-center gap-2">
@@ -802,7 +806,7 @@ export function SessionDashboard() {
                         <div className="grid gap-5 lg:grid-cols-2">
                           {/* Evidence */}
                           <Card className="p-4">
-                            <SectionLabel className="mb-3">Evidence (sample)</SectionLabel>
+                            <SectionLabel className="mb-3">{t('evidenceSample')}</SectionLabel>
                             <ScrollArea className="max-h-[320px]">
                               <div className="space-y-2 pr-2">
                                 {evidence.slice(0, 14).map((ev: any) => (
@@ -813,7 +817,7 @@ export function SessionDashboard() {
                                         <div className="mt-1 text-[11px] text-white/40">
                                           {ev.source}{' '}
                                           <span className="mono text-white/50">
-                                            · {ev.timeKind === 'published' ? 'Published' : 'Seen'}{' '}
+                                            · {ev.timeKind === 'published' ? t('published') : t('seen')}{' '}
                                             {new Date(ev.publishedAt).toLocaleTimeString()}
                                           </span>
                                         </div>
@@ -824,12 +828,12 @@ export function SessionDashboard() {
                                         rel="noreferrer"
                                         className="shrink-0 text-[11px] font-medium text-primary/80 hover:text-primary"
                                       >
-                                        Open
+                                        {t('open')}
                                       </a>
                                     </div>
                                     {ev.aiSummary?.bullets?.length > 0 && (
                                       <div className="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                                        <SectionLabel>AI Summary</SectionLabel>
+                                        <SectionLabel>{t('aiSummary')}</SectionLabel>
                                         <div className="mt-1 space-y-1 text-[13px] text-white/70">
                                           {ev.aiSummary.bullets.slice(0, 2).map((b: string, idx: number) => (
                                             <div key={`${ev.id}_b_${idx}`} className="flex gap-2">
@@ -843,7 +847,7 @@ export function SessionDashboard() {
                                   </div>
                                 ))}
                                 {!evidence.length && (
-                                  <EmptyState title="No artifacts" description="No artifacts stored on this session yet." className="py-8" />
+                                  <EmptyState title={t('noArtifacts')} description={t('noArtifactsDesc')} className="py-8" />
                                 )}
                               </div>
                             </ScrollArea>
@@ -852,34 +856,34 @@ export function SessionDashboard() {
                           {/* Tape + Narratives */}
                           <div className="space-y-5">
                             <Card className="p-4">
-                              <SectionLabel className="mb-3">Breaking Tape (sample)</SectionLabel>
+                              <SectionLabel className="mb-3">{t('breakingTape')}</SectionLabel>
                               <ScrollArea className="max-h-[220px]">
                                 <div className="space-y-2 pr-2">
-                                  {tape.slice(0, 10).map((t: any) => (
-                                    <div key={t.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+                                  {tape.slice(0, 10).map((tapeItem: any) => (
+                                    <div key={tapeItem.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
                                       <div className="flex items-start justify-between gap-3">
-                                        <div className="text-[13px] font-semibold text-white/85">{t.title}</div>
-                                        <div className="text-[11px] text-white/40 mono">{new Date(t.publishedAt).toLocaleTimeString()}</div>
+                                        <div className="text-[13px] font-semibold text-white/85">{tapeItem.title}</div>
+                                        <div className="text-[11px] text-white/40 mono">{new Date(tapeItem.publishedAt).toLocaleTimeString()}</div>
                                       </div>
-                                      <div className="mt-1 text-[11px] text-white/50">{t.source}</div>
-                                      {Array.isArray(t.tags) && t.tags.length > 0 && (
+                                      <div className="mt-1 text-[11px] text-white/50">{tapeItem.source}</div>
+                                      {Array.isArray(tapeItem.tags) && tapeItem.tags.length > 0 && (
                                         <div className="mt-2 flex flex-wrap gap-1.5">
-                                          {t.tags.slice(0, 6).map((tag: string) => (
-                                            <Badge key={`${t.id}_${tag}`} className="mono">{tag}</Badge>
+                                          {tapeItem.tags.slice(0, 6).map((tag: string) => (
+                                            <Badge key={`${tapeItem.id}_${tag}`} className="mono">{tag}</Badge>
                                           ))}
                                         </div>
                                       )}
                                     </div>
                                   ))}
                                   {!tape.length && (
-                                    <EmptyState title="No tape items" className="py-6" />
+                                    <EmptyState title={t('noTapeItems')} className="py-6" />
                                   )}
                                 </div>
                               </ScrollArea>
                             </Card>
 
                             <Card className="p-4">
-                              <SectionLabel className="mb-3">Narratives (sample)</SectionLabel>
+                              <SectionLabel className="mb-3">{t('narrativesSample')}</SectionLabel>
                               <ScrollArea className="max-h-[220px]">
                                 <div className="space-y-2 pr-2">
                                   {clusters.slice(0, 6).map((c: any) => (
@@ -892,7 +896,7 @@ export function SessionDashboard() {
                                     </div>
                                   ))}
                                   {!clusters.length && (
-                                    <EmptyState title="No clusters" className="py-6" />
+                                    <EmptyState title={t('noClusters')} className="py-6" />
                                   )}
                                 </div>
                               </ScrollArea>

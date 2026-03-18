@@ -15,7 +15,7 @@ export async function generateMetadata({
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://trendanalysis.ai';
 
   return {
-    title: t('homeTitle'),
+    title: { absolute: t('homeTitle') },
     description: t('homeDesc'),
     keywords: [
       'trend analysis',
