@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowLeft, Copy, LayoutDashboard, RefreshCw } from 'lucide-react';
 
@@ -8,7 +8,16 @@ import { cn, apiPath } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Panel } from '@/components/ui/Panel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { SectionLabel } from '@/components/ui/section-label';
+import { MomentumBadge } from '@/components/ui/momentum-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { SiteHeader } from '@/components/layout/site-header';
+import { PageBackground } from '@/components/layout/page-background';
 
 type SessionSummary = {
   id: string;
@@ -224,6 +233,16 @@ function toneForStatus(status: string) {
   return 'neutral' as const;
 }
 
+/* ── Stat chip ──────────────────────────────────────────────────────── */
+function Stat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
+      {label} <span className="mono text-white/75">{value}</span>
+    </span>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
 export function SessionDashboard() {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -233,7 +252,7 @@ export function SessionDashboard() {
   const [detail, setDetail] = useState<SessionDetailResponse | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'artifacts' | 'trace'>('artifacts');
+  const [tab, setTab] = useState<string>('artifacts');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const detailInFlightRef = useRef(false);
 
@@ -381,544 +400,511 @@ export function SessionDashboard() {
 
   return (
     <div className="min-h-screen">
-      <div className="bg-terminal fixed inset-0 -z-10" />
+      <PageBackground />
+      <SiteHeader />
 
-      <header className="sticky top-0 z-40">
-        <div className="mx-auto max-w-[1520px] px-4 py-3">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-2xl">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[rgba(0,102,255,0.16)] via-transparent to-[rgba(255,82,28,0.12)] opacity-70" />
-            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/terminal"
-                  className="inline-flex h-10 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/75 transition hover:bg-white/[0.06]"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Terminal
-                </Link>
-                <div className="hidden h-9 w-px bg-white/10 sm:block" />
-                <div>
-                  <div className="text-xs font-semibold tracking-[0.22em] text-white/50">BRIGHT DATA</div>
-                  <div className="text-lg font-semibold text-white/90">Sessions Dashboard</div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href="/how-it-works"
-                  className="inline-flex h-10 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/70 transition hover:bg-white/[0.06]"
-                >
-                  Architecture
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-white/12 bg-white/[0.03]"
-                  onClick={() => void fetchSessions()}
-                  disabled={loading}
-                >
-                  <RefreshCw className={cn('h-4 w-4', loading ? 'animate-spin' : '')} />
-                  Refresh
-                </Button>
-              </div>
+      {/* Page heading */}
+      <div className="mx-auto max-w-[1520px] px-4 pb-4 pt-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/terminal">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="h-4 w-4" />
+                Terminal
+              </Button>
+            </Link>
+            <Separator orientation="vertical" className="hidden h-6 sm:block" />
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">Sessions</p>
+              <h1 className="text-lg font-semibold text-white/90">Dashboard</h1>
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/how-it-works">
+              <Button variant="outline" size="sm">Architecture</Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void fetchSessions()}
+              disabled={loading}
+            >
+              <RefreshCw className={cn('h-4 w-4', loading ? 'animate-spin' : '')} />
+              Refresh
+            </Button>
+          </div>
         </div>
-      </header>
+      </div>
 
       <main className="mx-auto max-w-[1520px] px-4 pb-14">
         <div className="grid gap-5 lg:grid-cols-12">
+          {/* ── Left: Session List ──────────────────────────────────── */}
           <div className="lg:col-span-4">
-            <Panel
-              title="Sessions"
-              hint="Loaded from PostgreSQL (sessions + session_events)"
-              icon={<LayoutDashboard className="h-4 w-4" />}
-              actions={
+            <Card>
+              <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
+                <div className="flex items-center gap-2">
+                  <LayoutDashboard className="h-4 w-4 text-white/50" />
+                  <CardTitle>Sessions</CardTitle>
+                </div>
                 <div className="flex items-center gap-2">
                   <Input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Filter by topic..."
-                    className="h-9 w-[min(260px,48vw)] border-white/10 bg-white/[0.02]"
+                    className="h-8 w-[min(200px,40vw)] text-[12px]"
                   />
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-white/12 bg-white/[0.03]"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => void fetchSessions()}
                     disabled={loading}
                     title="Refresh list"
                   >
-                    <RefreshCw className={cn('h-4 w-4', loading ? 'animate-spin' : '')} />
+                    <RefreshCw className={cn('h-3.5 w-3.5', loading ? 'animate-spin' : '')} />
                   </Button>
                 </div>
-              }
-            >
-              {error ? (
-                <div className="rounded-2xl border border-white/10 bg-[rgba(255,82,28,0.08)] px-3 py-3 text-sm text-white/70">
-                  {error}
-                </div>
-              ) : null}
+              </CardHeader>
+              <CardContent className="pt-0">
+                {error && (
+                  <Card className="border-orange/25 bg-orange/[0.06] p-3 text-sm text-white/70">
+                    {error}
+                  </Card>
+                )}
 
-              {!sessions.length && !loading ? (
-                <div className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 text-sm text-white/60">
-                  No sessions yet. Run a topic in the terminal to populate history.
-                </div>
-              ) : (
-                <div className="max-h-[72vh] overflow-auto pr-1">
-                  <div className="space-y-2">
-                    {sessions.map((s) => {
-                      const selected = s.id === selectedId;
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedId(s.id);
-                            setTab('artifacts');
-                          }}
-                          className={cn(
-                            'w-full rounded-2xl border px-3 py-3 text-left transition',
-                            selected ? 'border-white/20 bg-white/[0.06]' : 'border-white/10 bg-[var(--panel-2)] hover:bg-white/[0.06]',
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-white/88">{s.topic}</div>
-                              <div className="mt-0.5 text-[11px] text-white/45 mono">{formatTime(s.createdAt)}</div>
+                {!sessions.length && !loading ? (
+                  <EmptyState
+                    icon={<LayoutDashboard className="h-8 w-8" />}
+                    title="No sessions yet"
+                    description="Run a topic in the terminal to populate history."
+                    action={
+                      <Link href="/terminal">
+                        <Button size="sm">Open Terminal</Button>
+                      </Link>
+                    }
+                  />
+                ) : (
+                  <ScrollArea className="max-h-[72vh]">
+                    <div className="space-y-2 pr-2">
+                      {sessions.map((s) => {
+                        const selected = s.id === selectedId;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedId(s.id);
+                              setTab('artifacts');
+                            }}
+                            className={cn(
+                              'w-full rounded-xl border p-3 text-left transition',
+                              selected
+                                ? 'border-white/20 bg-white/[0.07]'
+                                : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]',
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="truncate text-[13px] font-semibold text-white/88">{s.topic}</div>
+                                <div className="mt-0.5 text-[11px] text-white/40 mono">{formatTime(s.createdAt)}</div>
+                              </div>
+                              <Badge tone={toneForStatus(s.status)} className="mono shrink-0">
+                                {s.status}
+                              </Badge>
                             </div>
-                            <Badge tone={toneForStatus(s.status)} className="mono">
-                              {s.status}
-                            </Badge>
-                          </div>
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-white/55">
-                            {s.mode ? <Badge className="mono">{s.mode}</Badge> : null}
-                            {s.provider ? <Badge className="mono">{s.provider}</Badge> : null}
-                            <span className="rounded-md bg-white/[0.04] px-2 py-1">
-                              ev <span className="mono text-white/75">{compact(s.counts.evidence)}</span>
-                            </span>
-                            <span className="rounded-md bg-white/[0.04] px-2 py-1">
-                              n <span className="mono text-white/75">{compact(s.counts.nodes)}</span>
-                            </span>
-                            <span className="rounded-md bg-white/[0.04] px-2 py-1">
-                              e <span className="mono text-white/75">{compact(s.counts.edges)}</span>
-                            </span>
-                          </div>
-                          {Array.isArray(s.mapTags) && s.mapTags.length ? (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {s.mapTags.slice(0, 4).map((tag) => (
-                                <span
-                                  key={`${s.id}_${tag}`}
-                                  className="rounded-full border border-white/12 bg-white/[0.03] px-2 py-0.5 text-[10px] text-white/62"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              {s.mode && <Badge className="mono">{s.mode}</Badge>}
+                              {s.provider && <Badge className="mono">{s.provider}</Badge>}
+                              <Stat label="ev" value={compact(s.counts.evidence)} />
+                              <Stat label="n" value={compact(s.counts.nodes)} />
+                              <Stat label="e" value={compact(s.counts.edges)} />
                             </div>
-                          ) : null}
-                          <div className="mt-2">
-                            <Link
-                              href={`/terminal?sessionId=${encodeURIComponent(s.id)}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-white/70 transition hover:bg-white/[0.06]"
-                            >
-                              Open snapshot
-                            </Link>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </Panel>
+                            {Array.isArray(s.mapTags) && s.mapTags.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {s.mapTags.slice(0, 4).map((tag) => (
+                                  <Badge key={`${s.id}_${tag}`} className="text-[10px]">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            <div className="mt-2">
+                              <Link
+                                href={`/terminal?sessionId=${encodeURIComponent(s.id)}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center text-[11px] font-medium text-primary/80 hover:text-primary"
+                              >
+                                Open snapshot &rarr;
+                              </Link>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
+          {/* ── Right: Session Detail ──────────────────────────────── */}
           <div className="lg:col-span-8">
-            <Panel
-              title={selectedSummary ? `Session: ${selectedSummary.topic}` : 'Session'}
-              hint={selectedId ? selectedId : 'Select a session on the left'}
-              icon={<Activity className="h-4 w-4" />}
-              actions={
-                selectedId ? (
+            <Card>
+              <CardHeader className="flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-white/50" />
+                  <div>
+                    <CardTitle>
+                      {selectedSummary ? selectedSummary.topic : 'Session'}
+                    </CardTitle>
+                    <p className="mt-0.5 text-[11px] text-white/40 mono">
+                      {selectedId || 'Select a session'}
+                    </p>
+                  </div>
+                </div>
+                {selectedId && (
                   <div className="flex items-center gap-2">
-                    <div className="hidden items-center rounded-full border border-white/10 bg-white/[0.03] p-1 text-[11px] text-white/60 sm:flex">
-                      <button
-                        type="button"
-                        className={cn(
-                          'rounded-full px-3 py-1 transition',
-                          tab === 'artifacts' ? 'bg-white/10 text-white/80' : 'text-white/55 hover:text-white/75',
-                        )}
-                        onClick={() => setTab('artifacts')}
-                      >
-                        Artifacts
-                      </button>
-                      <button
-                        type="button"
-                        className={cn(
-                          'rounded-full px-3 py-1 transition',
-                          tab === 'trace' ? 'bg-white/10 text-white/80' : 'text-white/55 hover:text-white/75',
-                        )}
-                        onClick={() => setTab('trace')}
-                      >
-                        Trace
-                      </button>
-                    </div>
+                    <Tabs value={tab} onValueChange={setTab}>
+                      <TabsList className="hidden sm:inline-flex">
+                        <TabsTrigger value="artifacts">Artifacts</TabsTrigger>
+                        <TabsTrigger value="trace">Trace</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-white/12 bg-white/[0.03]"
                       onClick={() => (selectedId ? void fetchDetail(selectedId) : null)}
                       disabled={detailLoading || !selectedId}
-                      title="Reload session details"
                     >
                       <RefreshCw className={cn('h-4 w-4', detailLoading ? 'animate-spin' : '')} />
                       Refresh
                     </Button>
                     <Link
                       href={selectedId ? `/terminal?sessionId=${encodeURIComponent(selectedId)}` : '/terminal'}
-                      className={cn(
-                        'inline-flex h-9 items-center rounded-xl border border-white/12 bg-white/[0.03] px-3 text-xs font-semibold text-white/75 transition hover:bg-white/[0.06]',
-                        !selectedId ? 'pointer-events-none opacity-50' : '',
-                      )}
+                      className={!selectedId ? 'pointer-events-none opacity-50' : ''}
                     >
-                      Open snapshot
+                      <Button variant="outline" size="sm">Open snapshot</Button>
                     </Link>
                   </div>
-                ) : null
-              }
-            >
-              {detailError ? (
-                <div className="rounded-2xl border border-white/10 bg-[rgba(255,82,28,0.08)] px-3 py-3 text-sm text-white/70">
-                  {detailError}
-                </div>
-              ) : null}
+                )}
+              </CardHeader>
+              <CardContent>
+                {detailError && (
+                  <Card className="border-orange/25 bg-orange/[0.06] p-3 text-sm text-white/70 mb-4">
+                    {detailError}
+                  </Card>
+                )}
 
-              {!selectedId ? (
-                <div className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 text-sm text-white/60">
-                  Pick a session to view stored artifacts and the pipeline trace.
-                </div>
-              ) : detailLoading && !detail ? (
-                <div className="space-y-2">
-                  <div className="h-12 rounded-2xl bg-white/[0.03] shimmer" />
-                  <div className="h-12 rounded-2xl bg-white/[0.03] shimmer" />
-                  <div className="h-12 rounded-2xl bg-white/[0.03] shimmer" />
-                </div>
-              ) : !detail ? (
-                <div className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 text-sm text-white/60">
-                  No session data loaded.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3">
-                    <div className="min-w-0">
-                      <div className="mono text-[11px] font-semibold text-white/70">{detail.session.id}</div>
-                      <div className="mt-1 text-sm text-white/75">
-                        Stored: <span className="mono text-white/85">{formatTime(detail.session.created_at)}</span>
-                      </div>
-                      <div className="mt-1 text-[11px] text-white/45">
-                        status <span className="mono text-white/70">{detail.session.status}</span> · step{' '}
-                        <span className="mono text-white/70">{detail.session.step}</span> ·{' '}
-                        {Math.round((detail.session.progress || 0) * 100)}%
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-white/12 bg-white/[0.03]"
-                        onClick={async () => {
-                          const ok = await copyToClipboard(detail.session.id);
-                          if (ok) setCopiedKey('session.id');
-                        }}
-                      >
-                        <Copy className="h-4 w-4" />
-                        {copiedKey === 'session.id' ? 'Copied' : 'Copy'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-white/12 bg-white/[0.03]"
-                        onClick={async () => {
-                          const ok = await copyToClipboard(JSON.stringify(detail.session.meta || {}, null, 2));
-                          if (ok) setCopiedKey('session.meta');
-                        }}
-                      >
-                        <Copy className="h-4 w-4" />
-                        {copiedKey === 'session.meta' ? 'Meta copied' : 'Copy meta'}
-                      </Button>
-                    </div>
+                {!selectedId ? (
+                  <EmptyState
+                    icon={<Activity className="h-8 w-8" />}
+                    title="Select a session"
+                    description="Pick a session to view stored artifacts and the pipeline trace."
+                  />
+                ) : detailLoading && !detail ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-14 w-full" />
+                    <Skeleton className="h-14 w-full" />
+                    <Skeleton className="h-14 w-full" />
                   </div>
-
-                  {tab === 'trace' ? (
-                    <div className="rounded-2xl border border-white/10 bg-black/10 p-2">
-                      <div className="max-h-[62vh] overflow-auto p-2">
-                        <div className="space-y-2">
-                          {detail.events.map((ev) => {
-                            const summary = sessionSummaryLine(ev);
-                            return (
-                              <div key={ev.id} className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-2">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <div className="mono text-[11px] font-semibold text-white/70">{ev.type}</div>
-                                    {summary ? <div className="mt-1 truncate text-sm text-white/80">{summary}</div> : null}
-                                  </div>
-                                  <div className="shrink-0 text-right">
-                                    <div className="text-[11px] text-white/45 mono">{new Date(ev.created_at).toLocaleTimeString()}</div>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="mt-1 h-7 w-7"
-                                      aria-label="Copy event payload"
-                                      onClick={async () => {
-                                        const text = JSON.stringify({ type: ev.type, payload: ev.payload }, null, 2);
-                                        const ok = await copyToClipboard(text);
-                                        if (ok) setCopiedKey(`ev.${ev.id}`);
-                                      }}
-                                    >
-                                      <Copy
-                                        className={cn(
-                                          'h-3.5 w-3.5',
-                                          copiedKey === `ev.${ev.id}` ? 'text-white/85' : 'text-white/55',
-                                        )}
-                                      />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                ) : !detail ? (
+                  <EmptyState
+                    icon={<Activity className="h-8 w-8" />}
+                    title="No session data"
+                    description="Could not load session data."
+                  />
+                ) : (
+                  <div className="space-y-5">
+                    {/* Session header info */}
+                    <Card className="p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="mono text-[11px] font-semibold text-white/60">{detail.session.id}</div>
+                          <div className="mt-1 text-[13px] text-white/75">
+                            Stored: <span className="mono text-white/85">{formatTime(detail.session.created_at)}</span>
+                          </div>
+                          <div className="mt-1 text-[11px] text-white/40">
+                            status <span className="mono text-white/65">{detail.session.status}</span> · step{' '}
+                            <span className="mono text-white/65">{detail.session.step}</span> ·{' '}
+                            {Math.round((detail.session.progress || 0) * 100)}%
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              const ok = await copyToClipboard(detail.session.id);
+                              if (ok) setCopiedKey('session.id');
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            {copiedKey === 'session.id' ? 'Copied' : 'Copy ID'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              const ok = await copyToClipboard(JSON.stringify(detail.session.meta || {}, null, 2));
+                              if (ok) setCopiedKey('session.meta');
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            {copiedKey === 'session.meta' ? 'Copied' : 'Meta'}
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {detail.session.meta?.mode ? <Badge className="mono">{detail.session.meta.mode}</Badge> : null}
-                        {detail.session.meta?.provider ? <Badge className="mono">{detail.session.meta.provider}</Badge> : null}
-                        {detail.session.meta?.model ? <Badge className="mono">{detail.session.meta.model}</Badge> : null}
-                        <span className="rounded-md bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
-                          evidence <span className="mono text-white/75">{compact(evidence.length)}</span>
-                        </span>
-                        <span className="rounded-md bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
-                          tape <span className="mono text-white/75">{compact(tape.length)}</span>
-                        </span>
-                        <span className="rounded-md bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
-                          nodes <span className="mono text-white/75">{compact(nodes.length)}</span>
-                        </span>
-                        <span className="rounded-md bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
-                          edges <span className="mono text-white/75">{compact(edges.length)}</span>
-                        </span>
-                        <span className="rounded-md bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
-                          clusters <span className="mono text-white/75">{compact(clusters.length)}</span>
-                        </span>
-                      </div>
+                    </Card>
 
-                      {perf ? (
-                        <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div className="text-xs font-semibold tracking-[0.18em] text-white/45">RUN PERFORMANCE</div>
-                            <Badge tone="blue" className="mono">
-                              total {formatDuration(perf.totalMs)}
-                            </Badge>
-                            <span className="rounded-md bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
-                              marks <span className="mono text-white/75">{compact(perf.marksStored)}</span>
-                            </span>
-                            <span className="rounded-md bg-white/[0.04] px-2 py-1 text-[11px] text-white/55">
-                              status <span className="mono text-white/75">{perf.status}</span>
-                            </span>
-                          </div>
-
-                          <div className="mt-2 space-y-2">
-                            <details open className="rounded-xl border border-white/10 bg-[var(--panel-2)] px-3 py-2">
-                              <summary className="cursor-pointer text-xs font-semibold tracking-[0.12em] text-white/60">
-                                Overall steps ({perfStepRows.length})
-                              </summary>
-                              <div className="mt-2 space-y-2">
-                                {perfStepRows.length ? (
-                                  perfStepRows.map((row) => (
-                                    <div key={`perf_step_${row.step}`} className="rounded-lg border border-white/10 bg-black/20 px-2 py-2">
-                                      <div className="flex items-center justify-between gap-2 text-[11px]">
-                                        <span className="mono uppercase text-white/72">{row.step}</span>
-                                        <span className="mono text-white/80">{formatSeconds(row.ms)}</span>
-                                      </div>
-                                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
-                                        <div
-                                          className="h-full rounded-full bg-gradient-to-r from-[rgba(0,102,255,0.9)] to-[rgba(20,184,166,0.85)]"
-                                          style={{ width: `${Math.max(2, Math.round(row.pct))}%` }}
-                                        />
-                                      </div>
-                                      <div className="mt-1 text-right text-[10px] text-white/45 mono">{row.pct.toFixed(1)}%</div>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="text-xs text-white/55">No step timings stored.</div>
-                                )}
-                              </div>
-                            </details>
-
-                            <details className="rounded-xl border border-white/10 bg-[var(--panel-2)] px-3 py-2">
-                              <summary className="cursor-pointer text-xs font-semibold tracking-[0.12em] text-white/60">
-                                API timings ({perfApiRows.length})
-                              </summary>
-                              <div className="mt-2 space-y-2">
-                                {perfApiRows.length ? (
-                                  perfApiRows.map((apiRow) => (
-                                    <div key={`perf_api_${apiRow.name}`} className="rounded-lg border border-white/10 bg-black/20 px-2 py-2">
-                                      <div className="flex items-center justify-between gap-2 text-[11px]">
-                                        <span className="mono text-white/78">{apiRow.name}</span>
-                                        <span className="mono text-white/80">{formatSeconds(apiRow.totalMs)}</span>
-                                      </div>
-                                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-white/50">
-                                        <span>calls {apiRow.calls}</span>
-                                        <span>avg {formatSeconds(apiRow.avgMs)}</span>
-                                        <span>failures {apiRow.failures}</span>
-                                      </div>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="text-xs text-white/55">No API timings stored.</div>
-                                )}
-                              </div>
-                            </details>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {detailMapTagGroups.length ? (
-                        <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
-                          <div className="text-xs font-semibold tracking-[0.18em] text-white/45">EVIDENCE MAP TAGS</div>
-                          <div className="mt-2 space-y-2">
-                            {detailMapTagGroups.map((group) => (
-                              <div key={group.label} className="flex flex-wrap items-center gap-2">
-                                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
-                                  {group.label}
-                                </span>
-                                {group.tags.map((tag) => (
-                                  <span
-                                    key={`${group.label}_${tag.label}`}
-                                    className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-white/70"
-                                  >
-                                    {tag.label} <span className="mono text-white/45">{tag.count}</span>
-                                  </span>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      <div className="grid gap-4 lg:grid-cols-2">
-                        <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
-                          <div className="text-xs font-semibold tracking-[0.18em] text-white/45">EVIDENCE (sample)</div>
-                          <div className="mt-2 max-h-[320px] overflow-auto pr-1">
-                            <div className="space-y-2">
-                              {evidence.slice(0, 14).map((ev: any) => (
-                                <div key={ev.id} className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3">
+                    {tab === 'trace' ? (
+                      /* ── Trace tab ─────────────────────────────── */
+                      <Card className="p-3">
+                        <ScrollArea className="max-h-[62vh]">
+                          <div className="space-y-2 p-1">
+                            {detail.events.map((ev) => {
+                              const summary = sessionSummaryLine(ev);
+                              return (
+                                <div key={ev.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                      <div className="text-sm font-semibold text-white/86">{ev.title}</div>
-                                      <div className="mt-1 text-[11px] text-white/45">
-                                        {ev.source}{' '}
-                                        <span className="mono text-white/55">
-                                          · {ev.timeKind === 'published' ? 'Published' : 'Seen'}{' '}
-                                          {new Date(ev.publishedAt).toLocaleTimeString()}
-                                        </span>
-                                      </div>
+                                      <Badge className="mono">{ev.type}</Badge>
+                                      {summary && <div className="mt-1.5 truncate text-[13px] text-white/75">{summary}</div>}
                                     </div>
-                                    <a
-                                      href={ev.url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="shrink-0 text-xs text-[rgba(153,197,255,0.9)] hover:text-white underline underline-offset-4"
-                                    >
-                                      Open
-                                    </a>
+                                    <div className="shrink-0 text-right">
+                                      <div className="text-[11px] text-white/40 mono">{new Date(ev.created_at).toLocaleTimeString()}</div>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="mt-1 h-7 w-7"
+                                        aria-label="Copy event payload"
+                                        onClick={async () => {
+                                          const text = JSON.stringify({ type: ev.type, payload: ev.payload }, null, 2);
+                                          const ok = await copyToClipboard(text);
+                                          if (ok) setCopiedKey(`ev.${ev.id}`);
+                                        }}
+                                      >
+                                        <Copy
+                                          className={cn(
+                                            'h-3.5 w-3.5',
+                                            copiedKey === `ev.${ev.id}` ? 'text-white/85' : 'text-white/45',
+                                          )}
+                                        />
+                                      </Button>
+                                    </div>
                                   </div>
-                                  {ev.aiSummary?.bullets?.length ? (
-                                    <div className="mt-2 rounded-2xl border border-white/10 bg-black/10 px-3 py-2 text-sm text-white/75">
-                                      <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">AI SUMMARY</div>
-                                      <div className="mt-1 space-y-1">
-                                        {ev.aiSummary.bullets.slice(0, 2).map((b: string, idx: number) => (
-                                          <div key={`${ev.id}_b_${idx}`} className="flex gap-2">
-                                            <span className="text-white/35">-</span>
-                                            <span>{b}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : null}
                                 </div>
-                              ))}
-                              {!evidence.length ? (
-                                <div className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 text-sm text-white/60">
-                                  No artifacts stored on this session yet.
-                                </div>
-                              ) : null}
-                            </div>
+                              );
+                            })}
                           </div>
+                        </ScrollArea>
+                      </Card>
+                    ) : (
+                      /* ── Artifacts tab ──────────────────────────── */
+                      <div className="space-y-5">
+                        {/* Meta badges */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {detail.session.meta?.mode && <Badge className="mono">{detail.session.meta.mode}</Badge>}
+                          {detail.session.meta?.provider && <Badge className="mono">{detail.session.meta.provider}</Badge>}
+                          {detail.session.meta?.model && <Badge className="mono">{detail.session.meta.model}</Badge>}
+                          <Stat label="evidence" value={compact(evidence.length)} />
+                          <Stat label="tape" value={compact(tape.length)} />
+                          <Stat label="nodes" value={compact(nodes.length)} />
+                          <Stat label="edges" value={compact(edges.length)} />
+                          <Stat label="clusters" value={compact(clusters.length)} />
                         </div>
 
-                        <div className="space-y-4">
-                          <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
-                            <div className="text-xs font-semibold tracking-[0.18em] text-white/45">BREAKING TAPE (sample)</div>
-                            <div className="mt-2 max-h-[220px] overflow-auto pr-1">
-                              <div className="space-y-2">
-                                {tape.slice(0, 10).map((t: any) => (
-                                  <div key={t.id} className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3">
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="text-sm font-semibold text-white/86">{t.title}</div>
-                                      <div className="text-[11px] text-white/45 mono">{new Date(t.publishedAt).toLocaleTimeString()}</div>
-                                    </div>
-                                    <div className="mt-1 text-[11px] text-white/55">{t.source}</div>
-                                    {Array.isArray(t.tags) && t.tags.length ? (
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {t.tags.slice(0, 6).map((tag: string) => (
-                                          <Badge key={`${t.id}_${tag}`} className="mono">
-                                            {tag}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ))}
-                                {!tape.length ? (
-                                  <div className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 text-sm text-white/60">
-                                    No tape items.
-                                  </div>
-                                ) : null}
-                              </div>
+                        {/* Performance */}
+                        {perf && (
+                          <Card className="p-4">
+                            <div className="flex flex-wrap items-center gap-2 mb-4">
+                              <SectionLabel>Run Performance</SectionLabel>
+                              <Badge variant="blue" className="mono">total {formatDuration(perf.totalMs)}</Badge>
+                              <Stat label="marks" value={compact(perf.marksStored)} />
+                              <Stat label="status" value={perf.status} />
                             </div>
-                          </div>
 
-                          <div className="rounded-2xl border border-white/10 bg-black/10 p-3">
-                            <div className="text-xs font-semibold tracking-[0.18em] text-white/45">NARRATIVES (sample)</div>
-                            <div className="mt-2 max-h-[220px] overflow-auto pr-1">
-                              <div className="space-y-2">
-                                {clusters.slice(0, 6).map((c: any) => (
-                                  <div key={c.id} className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3">
+                            <div className="space-y-3">
+                              <details open className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                                <summary className="cursor-pointer text-[12px] font-semibold text-white/60">
+                                  Overall steps ({perfStepRows.length})
+                                </summary>
+                                <div className="mt-3 space-y-2">
+                                  {perfStepRows.length ? (
+                                    perfStepRows.map((row) => (
+                                      <div key={`perf_step_${row.step}`} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                                        <div className="flex items-center justify-between gap-2 text-[12px]">
+                                          <span className="mono uppercase text-white/70">{row.step}</span>
+                                          <span className="mono text-white/80">{formatSeconds(row.ms)}</span>
+                                        </div>
+                                        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                                          <div
+                                            className="h-full rounded-full bg-gradient-to-r from-primary to-teal"
+                                            style={{ width: `${Math.max(2, Math.round(row.pct))}%` }}
+                                          />
+                                        </div>
+                                        <div className="mt-1 text-right text-[10px] text-white/40 mono">{row.pct.toFixed(1)}%</div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-[12px] text-white/45">No step timings stored.</p>
+                                  )}
+                                </div>
+                              </details>
+
+                              <details className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                                <summary className="cursor-pointer text-[12px] font-semibold text-white/60">
+                                  API timings ({perfApiRows.length})
+                                </summary>
+                                <div className="mt-3 space-y-2">
+                                  {perfApiRows.length ? (
+                                    perfApiRows.map((apiRow) => (
+                                      <div key={`perf_api_${apiRow.name}`} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                                        <div className="flex items-center justify-between gap-2 text-[12px]">
+                                          <span className="mono text-white/70">{apiRow.name}</span>
+                                          <span className="mono text-white/80">{formatSeconds(apiRow.totalMs)}</span>
+                                        </div>
+                                        <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-white/45">
+                                          <span>calls {apiRow.calls}</span>
+                                          <span>avg {formatSeconds(apiRow.avgMs)}</span>
+                                          <span>failures {apiRow.failures}</span>
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-[12px] text-white/45">No API timings stored.</p>
+                                  )}
+                                </div>
+                              </details>
+                            </div>
+                          </Card>
+                        )}
+
+                        {/* Map Tags */}
+                        {detailMapTagGroups.length > 0 && (
+                          <Card className="p-4">
+                            <SectionLabel className="mb-3">Evidence Map Tags</SectionLabel>
+                            <div className="space-y-3">
+                              {detailMapTagGroups.map((group) => (
+                                <div key={group.label} className="flex flex-wrap items-center gap-2">
+                                  <SectionLabel>{group.label}</SectionLabel>
+                                  {group.tags.map((tag) => (
+                                    <Badge key={`${group.label}_${tag.label}`}>
+                                      {tag.label} <span className="mono text-white/40 ml-1">{tag.count}</span>
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          </Card>
+                        )}
+
+                        {/* Evidence & Tape grid */}
+                        <div className="grid gap-5 lg:grid-cols-2">
+                          {/* Evidence */}
+                          <Card className="p-4">
+                            <SectionLabel className="mb-3">Evidence (sample)</SectionLabel>
+                            <ScrollArea className="max-h-[320px]">
+                              <div className="space-y-2 pr-2">
+                                {evidence.slice(0, 14).map((ev: any) => (
+                                  <div key={ev.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
                                     <div className="flex items-start justify-between gap-3">
-                                      <div className="text-sm font-semibold text-white/86">{c.title}</div>
-                                      <Badge className="capitalize">{c.momentum}</Badge>
+                                      <div className="min-w-0">
+                                        <div className="text-[13px] font-semibold text-white/85">{ev.title}</div>
+                                        <div className="mt-1 text-[11px] text-white/40">
+                                          {ev.source}{' '}
+                                          <span className="mono text-white/50">
+                                            · {ev.timeKind === 'published' ? 'Published' : 'Seen'}{' '}
+                                            {new Date(ev.publishedAt).toLocaleTimeString()}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <a
+                                        href={ev.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="shrink-0 text-[11px] font-medium text-primary/80 hover:text-primary"
+                                      >
+                                        Open
+                                      </a>
                                     </div>
-                                    <div className="mt-1 text-sm text-white/70">{c.summary}</div>
+                                    {ev.aiSummary?.bullets?.length > 0 && (
+                                      <div className="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                                        <SectionLabel>AI Summary</SectionLabel>
+                                        <div className="mt-1 space-y-1 text-[13px] text-white/70">
+                                          {ev.aiSummary.bullets.slice(0, 2).map((b: string, idx: number) => (
+                                            <div key={`${ev.id}_b_${idx}`} className="flex gap-2">
+                                              <span className="text-white/30">-</span>
+                                              <span>{b}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
-                                {!clusters.length ? (
-                                  <div className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 text-sm text-white/60">
-                                    No clusters.
-                                  </div>
-                                ) : null}
+                                {!evidence.length && (
+                                  <EmptyState title="No artifacts" description="No artifacts stored on this session yet." className="py-8" />
+                                )}
                               </div>
-                            </div>
+                            </ScrollArea>
+                          </Card>
+
+                          {/* Tape + Narratives */}
+                          <div className="space-y-5">
+                            <Card className="p-4">
+                              <SectionLabel className="mb-3">Breaking Tape (sample)</SectionLabel>
+                              <ScrollArea className="max-h-[220px]">
+                                <div className="space-y-2 pr-2">
+                                  {tape.slice(0, 10).map((t: any) => (
+                                    <div key={t.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="text-[13px] font-semibold text-white/85">{t.title}</div>
+                                        <div className="text-[11px] text-white/40 mono">{new Date(t.publishedAt).toLocaleTimeString()}</div>
+                                      </div>
+                                      <div className="mt-1 text-[11px] text-white/50">{t.source}</div>
+                                      {Array.isArray(t.tags) && t.tags.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                          {t.tags.slice(0, 6).map((tag: string) => (
+                                            <Badge key={`${t.id}_${tag}`} className="mono">{tag}</Badge>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {!tape.length && (
+                                    <EmptyState title="No tape items" className="py-6" />
+                                  )}
+                                </div>
+                              </ScrollArea>
+                            </Card>
+
+                            <Card className="p-4">
+                              <SectionLabel className="mb-3">Narratives (sample)</SectionLabel>
+                              <ScrollArea className="max-h-[220px]">
+                                <div className="space-y-2 pr-2">
+                                  {clusters.slice(0, 6).map((c: any) => (
+                                    <div key={c.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="text-[13px] font-semibold text-white/85">{c.title}</div>
+                                        <MomentumBadge momentum={c.momentum} />
+                                      </div>
+                                      <div className="mt-1 text-[13px] text-white/65">{c.summary}</div>
+                                    </div>
+                                  ))}
+                                  {!clusters.length && (
+                                    <EmptyState title="No clusters" className="py-6" />
+                                  )}
+                                </div>
+                              </ScrollArea>
+                            </Card>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Panel>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>

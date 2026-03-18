@@ -20,8 +20,8 @@ export function Panel({
   return (
     <section
       className={cn(
-        'panel-sheen relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel)]',
-        'shadow-[0_18px_50px_-34px_var(--shadow)] backdrop-blur-xl',
+        'panel-sheen relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04]',
+        'shadow-[0_18px_50px_-34px_rgba(0,0,0,0.3)] backdrop-blur-xl',
         className,
       )}
     >

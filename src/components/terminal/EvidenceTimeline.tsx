@@ -5,6 +5,7 @@ import { Activity, AlertTriangle, Clock3, Film, Newspaper, Tag, TrendingUp } fro
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/ui/card';
 
 export type TimelineItem = {
   id: string;
@@ -189,7 +190,7 @@ export function EvidenceTimeline({
   const lastTs = filtered.length ? filtered[filtered.length - 1]!.ts : 0;
 
   return (
-    <div className={cn('relative overflow-hidden rounded-2xl border border-white/10 bg-black/25', className)}>
+    <Card className={cn('relative overflow-hidden', className)}>
       <div className="pointer-events-none absolute inset-0 grid-overlay opacity-70" />
       <div className={cn('relative w-full overflow-auto p-4', viewportClassName ?? 'h-[320px] lg:h-[430px]')}>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -270,7 +271,7 @@ export function EvidenceTimeline({
             const start = group.items[0]!.ts;
             const end = group.items[group.items.length - 1]!.ts;
             return (
-              <section key={group.key} className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 sm:px-4">
+              <section key={group.key} className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 sm:px-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div className="text-[11px] font-semibold tracking-[0.16em] text-white/48">{group.label.toUpperCase()}</div>
                   <div className="mono text-[11px] text-white/50">
@@ -373,12 +374,12 @@ export function EvidenceTimeline({
           })}
 
           {!groups.length ? (
-            <div className="rounded-2xl border border-white/10 bg-[var(--panel-2)] px-3 py-3 text-sm text-white/60">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 text-sm text-white/60">
               No timeline entries for this filter combination.
             </div>
           ) : null}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

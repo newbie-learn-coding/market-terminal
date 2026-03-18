@@ -4,6 +4,8 @@ import { AlertTriangle, Globe, LayoutDashboard, Layers, Link2, ListTree, MinusCi
 import type { LucideIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 
 export type PipelineStep =
   | 'idle'
@@ -272,7 +274,7 @@ export function PipelineTimeline({
   })();
 
   return (
-    <div className={cn('mt-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2', className)}>
+    <div className={cn('mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 backdrop-blur-xl', className)}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
           {stages.map((s) => {
@@ -286,11 +288,15 @@ export function PipelineTimeline({
                     ? 'border-dashed border-white/10 bg-transparent text-white/40'
                     : 'border-white/10 bg-white/[0.02] text-white/45';
             return (
-              <div
+              <Badge
                 key={s.key}
+                variant={
+                  s.status === 'active' ? 'blue' : s.status === 'done' ? 'teal' : s.status === 'skipped' ? 'neutral' : 'default'
+                }
                 className={cn(
-                  'flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition',
-                  classes,
+                  'flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-semibold transition',
+                  s.status === 'active' && 'shadow-[0_0_0_4px_rgba(255,255,255,0.03)]',
+                  s.status === 'skipped' && 'border-dashed opacity-60',
                 )}
                 title={s.status === 'skipped' ? 'Skipped in fast mode' : s.label}
               >
@@ -300,22 +306,23 @@ export function PipelineTimeline({
                   <Icon className="h-3.5 w-3.5 opacity-80" />
                 )}
                 <span className="whitespace-nowrap">{s.label}</span>
-              </div>
+              </Badge>
             );
           })}
         </div>
 
         <div className="hidden shrink-0 items-center gap-2 text-[11px] text-white/55 sm:flex">
           {onOpenTrace ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onOpenTrace}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-semibold text-white/70 transition hover:bg-white/[0.06] hover:text-white/85"
+              className="h-auto gap-2 rounded-full px-3 py-1 text-[11px] font-semibold"
               title="Open run trace"
             >
               <ListTree className="h-4 w-4 opacity-80" />
               Trace
-            </button>
+            </Button>
           ) : null}
           <span className="mono">{Math.round(progress * 100)}%</span>
         </div>

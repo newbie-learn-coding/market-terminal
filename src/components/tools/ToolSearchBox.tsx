@@ -1,11 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { useState } from 'react';
 import { ArrowUpRight, Search } from 'lucide-react';
 
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+
 export function ToolSearchBox({ placeholder }: { placeholder: string }) {
   const router = useRouter();
+  const t = useTranslations('common');
   const [query, setQuery] = useState('');
   return (
     <form
@@ -21,20 +26,21 @@ export function ToolSearchBox({ placeholder }: { placeholder: string }) {
       <div className="flex items-center gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] px-4">
           <Search className="h-4 w-4 shrink-0 text-white/46" />
-          <input
+          <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
-            className="h-11 w-full border-0 bg-transparent text-sm text-white/90 outline-none placeholder:text-white/42"
+            className="h-11 border-0 bg-transparent px-0 ring-0 focus:border-0 focus:ring-0 placeholder:text-white/42"
           />
         </div>
-        <button
+        <Button
           type="submit"
           disabled={!query.trim()}
-          className="inline-flex h-11 items-center gap-2 rounded-xl border border-[rgba(0,102,255,0.42)] bg-[rgba(0,102,255,0.2)] px-4 text-sm font-semibold text-[rgba(199,228,255,0.98)] transition hover:bg-[rgba(0,102,255,0.28)] disabled:opacity-45"
+          size="lg"
+          className="border-[rgba(0,102,255,0.42)] bg-[rgba(0,102,255,0.2)] text-[rgba(199,228,255,0.98)] hover:bg-[rgba(0,102,255,0.28)]"
         >
-          Analyze <ArrowUpRight className="h-4 w-4" />
-        </button>
+          {t('analyze')} <ArrowUpRight className="h-4 w-4" />
+        </Button>
       </div>
     </form>
   );

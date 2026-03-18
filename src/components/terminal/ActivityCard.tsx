@@ -5,6 +5,9 @@ import { ChevronDown, ChevronUp, Globe, LayoutDashboard, Layers, Link2, Search, 
 import type { LucideIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/ui/card';
+import { SectionLabel } from '@/components/ui/section-label';
 import type { PipelineStep, PlanEvent, SearchEvent } from '@/components/terminal/PipelineTimeline';
 
 type StageKey = Exclude<PipelineStep, 'idle' | 'ready'>;
@@ -185,7 +188,7 @@ export function ActivityCard({
     if (focus === 'plan') {
       return (
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">PLANNED QUERIES</div>
+          <SectionLabel className="mb-0">Planned Queries</SectionLabel>
           {plan?.queries?.length ? (
             <div className="space-y-1">
               {plan.queries.slice(0, 10).map((q) => (
@@ -213,7 +216,7 @@ export function ActivityCard({
     if (focus === 'search') {
       return (
         <div className="space-y-3">
-          <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">SEARCH QUERIES</div>
+          <SectionLabel className="mb-0">Search Queries</SectionLabel>
           {queryQueue.length ? (
             <div className="space-y-2">
               {queryQueue.map((it) => (
@@ -234,7 +237,7 @@ export function ActivityCard({
 
           {search?.results?.length ? (
             <>
-              <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">TOP RESULTS</div>
+              <SectionLabel className="mb-0">Top Results</SectionLabel>
               <div className="space-y-1">
                 {search.results.slice(0, 6).map((r) => (
                   <a
@@ -259,7 +262,7 @@ export function ActivityCard({
       if (mode !== 'deep') return <div className="text-sm text-white/60">Scrape is skipped in Fast mode.</div>;
       return (
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">SCRAPE PAGES</div>
+          <SectionLabel className="mb-0">Scrape Pages</SectionLabel>
           {scrapeQueue.length ? (
             <div className="space-y-2">
               {scrapeQueue.map((it) => (
@@ -285,7 +288,7 @@ export function ActivityCard({
       const uniq = Array.from(new Set((evidenceSources || []).map((s) => String(s || '').trim()).filter(Boolean))).slice(0, 10);
       return (
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">EVIDENCE</div>
+          <SectionLabel className="mb-0">Evidence</SectionLabel>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
             {compactCount(evidenceCount)} items{summariesCount ? ` · ${compactCount(summariesCount)} summarized` : ''}
           </div>
@@ -306,7 +309,7 @@ export function ActivityCard({
       const v = graphVariant === 'expanded' ? 'expanded impact pass' : graphVariant === 'initial' ? 'initial map' : 'map';
       return (
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">MAP</div>
+          <SectionLabel className="mb-0">Map</SectionLabel>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
             {compactCount(nodesCount)} nodes · {compactCount(edgesCount)} edges · {v}
           </div>
@@ -318,7 +321,7 @@ export function ActivityCard({
     if (focus === 'cluster') {
       return (
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">NARRATIVES</div>
+          <SectionLabel className="mb-0">Narratives</SectionLabel>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
             {compactCount(clustersCount)} clusters
           </div>
@@ -328,7 +331,7 @@ export function ActivityCard({
 
     return (
       <div className="space-y-2">
-        <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">RENDER</div>
+        <SectionLabel className="mb-0">Render</SectionLabel>
         <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
           Panels updated.
         </div>
@@ -353,30 +356,30 @@ export function ActivityCard({
   ]);
 
   return (
-    <div className={cn('rounded-2xl border border-white/10 bg-black/15 px-3 py-3', className)}>
+    <Card className={cn('px-3 py-3', className)}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <div className="text-[11px] font-semibold tracking-[0.22em] text-white/45">ACTIVITY</div>
+            <SectionLabel>Activity</SectionLabel>
             {warningsCount ? (
-              <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-[rgba(255,170,90,0.10)] px-2 py-0.5 text-[11px] text-[rgba(255,170,90,0.95)]">
+              <Badge variant="orange" className="gap-1">
                 <TriangleAlert className="h-3.5 w-3.5" /> {warningsCount}
-              </div>
+              </Badge>
             ) : null}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/55">
-            <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-              <span className="font-semibold text-white/75">{headerLabel}</span>
-              <span className="text-white/35"> · </span>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-white/55">
+            <Badge variant="blue">
+              <span className="font-semibold">{headerLabel}</span>
+              <span className="mx-1 text-white/35">&middot;</span>
               <span className="mono">{Math.round(Math.max(0, Math.min(1, progress)) * 100)}%</span>
-            </span>
-            <span className="rounded-full bg-white/[0.04] px-2.5 py-1">{mode === 'deep' ? 'Deep' : 'Fast'}</span>
-            <span className="rounded-full bg-white/[0.04] px-2.5 py-1">{provider || 'ai'}</span>
+            </Badge>
+            <Badge>{mode === 'deep' ? 'Deep' : 'Fast'}</Badge>
+            <Badge>{provider || 'ai'}</Badge>
           </div>
         </div>
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs font-semibold text-white/65 hover:bg-white/[0.06]"
+          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs font-semibold text-white/65 transition hover:bg-white/[0.06]"
           onClick={() => setExpanded((v) => !v)}
           aria-label={expanded ? 'Collapse activity details' : 'Expand activity details'}
         >
@@ -463,7 +466,7 @@ export function ActivityCard({
       {expanded ? (
         <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">DETAILS</div>
+            <SectionLabel className="mb-0">Details</SectionLabel>
             <button
               type="button"
               className="text-[11px] font-semibold text-white/55 hover:text-white/75"
@@ -476,6 +479,6 @@ export function ActivityCard({
           <div className="mt-2 max-h-64 overflow-auto pr-1">{focusDetail}</div>
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }

@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
 
 export function ShareBar({
   url,
@@ -12,11 +15,11 @@ export function ShareBar({
   title: string;
   topic: string;
 }) {
+  const t = useTranslations('common');
   const [copied, setCopied] = useState(false);
 
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
-  const encodedTopic = encodeURIComponent(topic);
 
   const twitterHref = `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`;
   const redditHref = `https://reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`;
@@ -33,50 +36,36 @@ export function ShareBar({
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-black/25 p-6">
+    <Card className="p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold tracking-wider text-white/50">SHARE</span>
-          <a
-            href={twitterHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-xs text-white/70 transition hover:bg-white/[0.08]"
-          >
-            Twitter
-          </a>
-          <a
-            href={redditHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-xs text-white/70 transition hover:bg-white/[0.08]"
-          >
-            Reddit
-          </a>
-          <a
-            href={linkedinHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-xs text-white/70 transition hover:bg-white/[0.08]"
-          >
-            LinkedIn
-          </a>
-          <button
-            type="button"
-            onClick={copyLink}
-            className="inline-flex h-8 items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-xs text-white/70 transition hover:bg-white/[0.08]"
-          >
-            {copied ? 'Copied!' : 'Copy link'}
-          </button>
+          <span className="text-xs font-semibold tracking-wider text-white/50">{t('share').toUpperCase()}</span>
+          <Button variant="outline" size="sm" asChild>
+            <a href={twitterHref} target="_blank" rel="noopener noreferrer">
+              Twitter
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a href={redditHref} target="_blank" rel="noopener noreferrer">
+              Reddit
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a href={linkedinHref} target="_blank" rel="noopener noreferrer">
+              LinkedIn
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" onClick={copyLink}>
+            {copied ? t('copied') : t('copyLink')}
+          </Button>
         </div>
 
-        <Link
-          href="/terminal"
-          className="inline-flex h-9 items-center rounded-full border border-[rgba(0,102,255,0.45)] bg-[rgba(0,102,255,0.14)] px-4 text-sm font-semibold text-[rgba(180,214,255,0.95)] transition hover:bg-[rgba(0,102,255,0.22)]"
-        >
-          Analyze {topic || 'your asset'}
-        </Link>
+        <Button asChild>
+          <Link href="/terminal">
+            {t('analyze')} {topic || 'your asset'}
+          </Link>
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }

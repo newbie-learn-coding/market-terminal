@@ -1,5 +1,8 @@
 import { toneForNode, edgeTypeMeta, pickRoot, sortByScore } from '@/components/terminal/graph-utils';
 import type { GraphEdge, GraphNode, NodeType } from '@/components/terminal/types';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/Badge';
+import { SectionLabel } from '@/components/ui/section-label';
 
 export function StaticMindMap({
   topic,
@@ -77,102 +80,97 @@ export function StaticMindMap({
   );
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-black/25 p-6">
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full border border-[rgba(20,184,166,0.45)] bg-[rgba(20,184,166,0.14)] px-2.5 py-0.5 text-[10px] font-semibold tracking-wider text-[rgba(170,250,238,0.95)]">
-          MIND MAP
-        </span>
-        <span className="text-xs text-white/55">Graph structure overview</span>
-      </div>
-
-      {/* Focus Asset */}
-      <div className="mx-auto mt-4 max-w-[760px] rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <div className="text-[11px] font-semibold tracking-[0.18em] text-white/50">FOCUS ASSET</div>
-        <div className="mt-2 flex justify-center">
-          {root ? (
-            <span
-              className={`rounded-full border px-4 py-2 text-sm font-semibold ${toneForNode(root.type).border} ${toneForNode(root.type).bg} ${toneForNode(root.type).text}`}
-            >
-              {root.label}
-            </span>
-          ) : (
-            <span className="text-sm text-white/60">No nodes</span>
-          )}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <SectionLabel>Mind Map</SectionLabel>
+          <span className="text-xs text-white/55">Graph structure overview</span>
         </div>
+      </CardHeader>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {/* Catalysts */}
-          <div className="rounded-xl border border-white/10 bg-black/15 p-3">
-            <div className="text-[11px] font-semibold tracking-[0.16em] text-white/55">CATALYSTS</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {events.length ? (
-                events.map((id) => {
-                  const node = nodeById.get(id);
-                  if (!node) return null;
-                  const tone = toneForNode('event');
-                  return (
-                    <span
-                      key={id}
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs ${tone.border} ${tone.bg} ${tone.text}`}
-                    >
-                      <span className="max-w-[200px] truncate">{node.label}</span>
-                    </span>
-                  );
-                })
-              ) : (
-                <span className="text-xs text-white/55">No events</span>
-              )}
-            </div>
+      <CardContent>
+        {/* Focus Asset */}
+        <Card className="mx-auto max-w-[760px] p-4">
+          <div className="text-[11px] font-semibold tracking-[0.18em] text-white/50">FOCUS ASSET</div>
+          <div className="mt-2 flex justify-center">
+            {root ? (
+              <Badge
+                className={`px-4 py-2 text-sm ${toneForNode(root.type).border} ${toneForNode(root.type).bg} ${toneForNode(root.type).text}`}
+              >
+                {root.label}
+              </Badge>
+            ) : (
+              <span className="text-sm text-white/60">No nodes</span>
+            )}
           </div>
 
-          {/* Channels */}
-          <div className="rounded-xl border border-white/10 bg-black/15 p-3">
-            <div className="text-[11px] font-semibold tracking-[0.16em] text-white/55">CHANNELS</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {channelOrder.length ? (
-                channelOrder.map((type) => {
-                  const meta = edgeTypeMeta(type);
-                  return (
-                    <span
-                      key={type}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${meta.chip}`}
-                    >
-                      <span>{meta.label}</span>
-                      <span className="opacity-80">{channelCounts[type]}</span>
-                    </span>
-                  );
-                })
-              ) : (
-                <span className="text-xs text-white/55">No channels</span>
-              )}
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {/* Catalysts */}
+            <div className="rounded-xl border border-white/[0.08] bg-black/15 p-3">
+              <div className="text-[11px] font-semibold tracking-[0.16em] text-white/55">CATALYSTS</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {events.length ? (
+                  events.map((id) => {
+                    const node = nodeById.get(id);
+                    if (!node) return null;
+                    return (
+                      <Badge key={id} variant="orange">
+                        <span className="max-w-[200px] truncate">{node.label}</span>
+                      </Badge>
+                    );
+                  })
+                ) : (
+                  <span className="text-xs text-white/55">No events</span>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Impact */}
-          <div className="rounded-xl border border-white/10 bg-black/15 p-3">
-            <div className="text-[11px] font-semibold tracking-[0.16em] text-white/55">IMPACT</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[...spillovers, ...entities].slice(0, 6).length ? (
-                [...spillovers, ...entities].slice(0, 6).map((id) => {
-                  const node = nodeById.get(id);
-                  if (!node) return null;
-                  const tone = toneForNode(node.type);
-                  return (
-                    <span
-                      key={id}
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs ${tone.border} ${tone.bg} ${tone.text}`}
-                    >
-                      <span className="max-w-[200px] truncate">{node.label}</span>
-                    </span>
-                  );
-                })
-              ) : (
-                <span className="text-xs text-white/55">No impact nodes</span>
-              )}
+            {/* Channels */}
+            <div className="rounded-xl border border-white/[0.08] bg-black/15 p-3">
+              <div className="text-[11px] font-semibold tracking-[0.16em] text-white/55">CHANNELS</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {channelOrder.length ? (
+                  channelOrder.map((type) => {
+                    const meta = edgeTypeMeta(type);
+                    return (
+                      <Badge key={type} className={meta.chip}>
+                        <span>{meta.label}</span>
+                        <span className="opacity-80">{channelCounts[type]}</span>
+                      </Badge>
+                    );
+                  })
+                ) : (
+                  <span className="text-xs text-white/55">No channels</span>
+                )}
+              </div>
+            </div>
+
+            {/* Impact */}
+            <div className="rounded-xl border border-white/[0.08] bg-black/15 p-3">
+              <div className="text-[11px] font-semibold tracking-[0.16em] text-white/55">IMPACT</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[...spillovers, ...entities].slice(0, 6).length ? (
+                  [...spillovers, ...entities].slice(0, 6).map((id) => {
+                    const node = nodeById.get(id);
+                    if (!node) return null;
+                    const tone = toneForNode(node.type);
+                    return (
+                      <Badge
+                        key={id}
+                        className={`${tone.border} ${tone.bg} ${tone.text}`}
+                      >
+                        <span className="max-w-[200px] truncate">{node.label}</span>
+                      </Badge>
+                    );
+                  })
+                ) : (
+                  <span className="text-xs text-white/55">No impact nodes</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
+        </Card>
+      </CardContent>
+    </Card>
   );
 }

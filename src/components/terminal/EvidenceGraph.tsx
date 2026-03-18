@@ -9,6 +9,7 @@ import * as d3Force from 'd3-force-3d';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/card';
 import type { GraphEdge, GraphNode, NodeType } from '@/components/terminal/types';
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), { ssr: false }) as unknown as typeof import('react-force-graph-2d').default;
@@ -373,7 +374,7 @@ export function EvidenceGraph({
   }, [graphData.nodes, selected.nodeId]);
 
   return (
-    <div className={cn('relative overflow-hidden rounded-2xl border border-white/10 bg-black/25', className)}>
+    <Card className={cn('relative overflow-hidden', className)}>
       <div className="pointer-events-none absolute inset-0 grid-overlay opacity-70" />
 
       <div
@@ -496,6 +497,6 @@ export function EvidenceGraph({
           Scroll to zoom. Drag to pan. Click nodes/links to inspect evidence.
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

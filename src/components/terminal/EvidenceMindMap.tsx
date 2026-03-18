@@ -5,6 +5,7 @@ import { ArrowRight, ChevronDown, ChevronRight, CircleDot, GitBranch, Globe, Lay
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/ui/card';
 import type { GraphEdge, GraphNode, NodeType } from '@/components/terminal/types';
 import { toneForNode, edgeTypeMeta, formatPct, pickRoot, edgeBetween, sortByScore } from '@/components/terminal/graph-utils';
 
@@ -303,7 +304,7 @@ export function EvidenceMindMap({
   };
 
   return (
-    <div className={cn('relative overflow-hidden rounded-2xl border border-white/10 bg-black/25', className)}>
+    <Card className={cn('relative overflow-hidden', className)}>
       <div className="pointer-events-none absolute inset-0 grid-overlay opacity-70" />
       <div className={cn('relative w-full', viewportClassName ?? 'h-[320px] lg:h-[430px]')}>
         <div className="h-full overflow-auto p-4">
@@ -677,7 +678,7 @@ export function EvidenceMindMap({
           ) : null}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

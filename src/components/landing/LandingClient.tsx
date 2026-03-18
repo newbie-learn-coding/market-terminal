@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useEffect, useState } from 'react';
 import {
   Activity,
@@ -9,13 +9,18 @@ import {
   BarChart3,
   FileText,
   GitBranch,
-  LayoutDashboard,
   LineChart,
   Search,
   Sparkles,
   TrendingUp,
   Zap,
 } from 'lucide-react';
+
+import { SiteHeader } from '@/components/layout/site-header';
+import { SiteFooter } from '@/components/layout/site-footer';
+import { PageBackground } from '@/components/layout/page-background';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
 
 const LANDING_EXAMPLES = [
   'How is AI disrupting the healthcare industry?',
@@ -40,6 +45,8 @@ type TrendingTopic = {
 
 export default function LandingClient({ trendingTopics = [] }: { trendingTopics?: TrendingTopic[] }) {
   const router = useRouter();
+  const t = useTranslations('landing');
+  const tc = useTranslations('common');
   const [query, setQuery] = useState('');
   const [typedHint, setTypedHint] = useState('');
 
@@ -115,53 +122,8 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="bg-terminal fixed inset-0 -z-20" />
-      <div className="grid-overlay pointer-events-none fixed inset-0 -z-10 opacity-60" />
-
-      {/* Header */}
-      <header className="sticky top-0 z-40">
-        <div className="mx-auto max-w-[1280px] px-4 py-4">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-2xl">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[rgba(0,102,255,0.22)] via-transparent to-[rgba(120,196,255,0.14)] opacity-75" />
-            <div className="relative flex items-center justify-between gap-3">
-              <Link href="/" className="flex items-center gap-0 shrink-0">
-                <span className="text-lg font-bold tracking-tight text-white/92">TrendAnalysis</span>
-                <span className="text-lg font-bold tracking-tight text-[var(--blue)]">.ai</span>
-              </Link>
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href="/trending"
-                  className="inline-flex h-9 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/74 transition hover:bg-white/[0.06]"
-                >
-                  <TrendingUp className="h-3.5 w-3.5" />
-                  Trending
-                </Link>
-                <Link
-                  href="/tools"
-                  className="inline-flex h-9 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/74 transition hover:bg-white/[0.06]"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Tools
-                </Link>
-                <Link
-                  href="/asset"
-                  className="inline-flex h-9 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-white/74 transition hover:bg-white/[0.06]"
-                >
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  Reports
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-white/50 transition hover:bg-white/[0.06] hover:text-white/74"
-                  title="Dashboard"
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageBackground />
+      <SiteHeader />
 
       {/* Hero */}
       <main className="mx-auto max-w-[980px] px-4 pb-14 pt-14 sm:pt-20 flex-1">
@@ -173,21 +135,21 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
             <BarChart3 className="finance-float absolute right-[8%] top-[68%] h-6 w-6 text-[rgba(120,196,255,0.3)]" style={{ animationDelay: '1.2s' }} />
           </div>
 
-          <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.035] p-6 shadow-[0_40px_120px_-70px_var(--shadow)] backdrop-blur-2xl sm:p-9">
+          <Card className="relative overflow-hidden rounded-[32px] p-8 sm:p-12 shadow-[0_40px_120px_-70px_rgba(0,0,0,0.55)]">
           <div className="panel-sheen absolute inset-0 rounded-[32px]" />
           <div className="relative text-center">
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[rgba(0,102,255,0.45)] bg-[rgba(0,102,255,0.12)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[rgba(182,220,255,0.95)]">
               <Sparkles className="h-3.5 w-3.5" />
-              AI-Powered Trend Analysis
+              {t('badge')}
             </div>
 
             <h1 className="mt-5 text-3xl font-semibold leading-tight text-white/92 sm:text-5xl">
-              Analyze trends.
+              {t('heroTitle1')}
               <br />
-              See the evidence.
+              {t('heroTitle2')}
             </h1>
             <p className="mx-auto mt-4 max-w-[760px] text-sm text-white/66 sm:text-base">
-              Ask any market question. Get real-time data, AI-powered knowledge graphs, and evidence-backed insights in seconds.
+              {t('heroDesc')}
             </p>
 
             <form
@@ -203,19 +165,20 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={typedHint || 'Ask any trend question... AI, markets, crypto, tech'}
+                    placeholder={typedHint || t('searchPlaceholder')}
                     className="h-11 w-full border-0 bg-transparent text-sm text-white/90 outline-none placeholder:text-white/42"
                     aria-label="Search topic"
                   />
                 </div>
-                <button
+                <Button
                   type="submit"
                   disabled={!query.trim()}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[rgba(0,102,255,0.42)] bg-[rgba(0,102,255,0.2)] px-4 text-sm font-semibold text-[rgba(199,228,255,0.98)] transition hover:bg-[rgba(0,102,255,0.28)] disabled:cursor-not-allowed disabled:opacity-45"
+                  size="lg"
+                  className="border-[rgba(0,102,255,0.42)] bg-[rgba(0,102,255,0.2)] text-[rgba(199,228,255,0.98)] hover:bg-[rgba(0,102,255,0.28)]"
                 >
-                  Analyze
+                  {tc('analyze')}
                   <ArrowUpRight className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
             </form>
 
@@ -237,26 +200,26 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
               <div className="mt-6">
                 <div className="mb-2.5 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-white/48">
                   <TrendingUp className="h-3.5 w-3.5 text-[var(--blue)]" />
-                  Trending Now
+                  {t('trendingNow')}
                   <Link
                     href="/trending"
                     className="ml-1 normal-case tracking-normal text-[var(--blue)] transition hover:text-white/80"
                   >
-                    View all &rarr;
+                    {tc('viewAll')} &rarr;
                   </Link>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-2">
-                  {trendingTopics.map((t) => (
+                  {trendingTopics.map((tt) => (
                     <Link
-                      key={t.assetKey}
-                      href={`/asset/${t.assetKey}`}
+                      key={tt.assetKey}
+                      href={`/asset/${tt.assetKey}`}
                       className="inline-flex h-8 items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-3 text-xs text-white/66 transition hover:bg-white/[0.06] hover:text-white/84"
                     >
-                      {t.sentiment && (
-                        <span className={`h-1.5 w-1.5 rounded-full ${SENTIMENT_DOT[t.sentiment] ?? SENTIMENT_DOT.neutral}`} />
+                      {tt.sentiment && (
+                        <span className={`h-1.5 w-1.5 rounded-full ${SENTIMENT_DOT[tt.sentiment] ?? SENTIMENT_DOT.neutral}`} />
                       )}
-                      {t.label.charAt(0).toUpperCase() + t.label.slice(1)}
-                      <span className="text-white/30">{t.count}</span>
+                      {tt.label.charAt(0).toUpperCase() + tt.label.slice(1)}
+                      <span className="text-white/30">{tt.count}</span>
                     </Link>
                   ))}
                 </div>
@@ -265,15 +228,14 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
 
             {/* Feature Cards */}
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {/* Real-Time Intelligence */}
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">
+              <Card className="p-4 text-center">
                 <div className="inline-flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.12em] text-white/48 uppercase">
                   <Zap className="h-3.5 w-3.5 text-[var(--blue)]" />
-                  Real-Time Intelligence
+                  {t('realTimeIntel')}
                 </div>
-                <p className="mt-2 text-[11px] text-white/50">Live data from 10+ sources analyzed in seconds</p>
+                <p className="mt-2 text-[11px] text-white/50">{t('realTimeIntelDesc')}</p>
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
-                  {['Plan', 'Search', 'Extract', 'Analyze'].map((step, i) => (
+                  {[t('stepPlan'), t('stepSearch'), t('stepExtract'), t('stepAnalyze')].map((step) => (
                     <span
                       key={step}
                       className="inline-flex h-6 items-center rounded-full border border-white/12 bg-white/[0.04] px-2 text-[10px] text-white/72"
@@ -285,17 +247,16 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
                 <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div className="pipeline-progress h-full rounded-full bg-gradient-to-r from-[var(--blue)] via-[rgba(120,196,255,0.95)] to-[rgba(170,209,255,0.95)]" />
                 </div>
-              </div>
+              </Card>
 
-              {/* Knowledge Graphs */}
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">
+              <Card className="p-4 text-center">
                 <div className="inline-flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.12em] text-white/48 uppercase">
                   <GitBranch className="h-3.5 w-3.5 text-[var(--blue)]" />
-                  Knowledge Graphs
+                  {t('knowledgeGraphs')}
                 </div>
-                <p className="mt-2 text-[11px] text-white/50">Interactive visualizations of connected insights</p>
+                <p className="mt-2 text-[11px] text-white/50">{t('knowledgeGraphsDesc')}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  {['Graph', 'Mind Map', 'Flow', 'Timeline'].map((view) => (
+                  {[t('viewGraph'), t('viewMindMap'), t('viewFlow'), t('viewTimeline')].map((view) => (
                     <span
                       key={view}
                       className="inline-flex h-7 items-center justify-center rounded-lg border border-white/12 bg-white/[0.04] text-[10px] font-semibold text-white/75"
@@ -304,15 +265,14 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
                     </span>
                   ))}
                 </div>
-              </div>
+              </Card>
 
-              {/* Published Reports */}
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center">
+              <Card className="p-4 text-center">
                 <div className="inline-flex items-center justify-center gap-2 text-xs font-semibold tracking-[0.12em] text-white/48 uppercase">
                   <FileText className="h-3.5 w-3.5 text-[var(--blue)]" />
-                  Published Reports
+                  {t('publishedReports')}
                 </div>
-                <p className="mt-2 text-[11px] text-white/50">Share and publish analysis with permanent links</p>
+                <p className="mt-2 text-[11px] text-white/50">{t('publishedReportsDesc')}</p>
                 <div className="mt-3 space-y-2">
                   <div className="mx-auto flex h-7 w-[92%] items-center gap-2 rounded-lg border border-white/12 bg-white/[0.04] px-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
@@ -327,29 +287,14 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
                     <span className="text-[9px] text-white/50 truncate">AI Healthcare Trends</span>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
-        </div>
+        </Card>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-white/8 py-6">
-        <div className="mx-auto max-w-[980px] px-4 text-center">
-          <div className="text-xs text-white/40">
-            <span className="font-semibold text-white/60">trendanalysis.ai</span>
-            <span className="mx-2">&middot;</span>
-            AI-powered trend analysis
-          </div>
-          <div className="mt-2 flex items-center justify-center gap-4 text-xs text-white/36">
-            <Link href="/tools" className="transition hover:text-white/60">Tools</Link>
-            <Link href="/trending" className="transition hover:text-white/60">Trending</Link>
-            <Link href="/asset" className="transition hover:text-white/60">Reports</Link>
-            <Link href="/dashboard" className="transition hover:text-white/60">Dashboard</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

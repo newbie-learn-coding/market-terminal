@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import { getLocale } from 'next-intl/server';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import Script from 'next/script';
 
@@ -16,30 +16,15 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ['400', '500', '600'],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://trendanalysis.ai'),
-  title: {
-    default: 'TrendAnalysis.ai',
-    template: '%s | TrendAnalysis.ai',
-  },
-  description: 'AI-powered trend analysis with real-time evidence maps and knowledge graphs.',
-  openGraph: {
-    siteName: 'TrendAnalysis.ai',
-    locale: 'en_US',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-  },
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-SDGRVMER2G" strategy="afterInteractive" />
         <Script id="gtag-ga4" strategy="afterInteractive">{`

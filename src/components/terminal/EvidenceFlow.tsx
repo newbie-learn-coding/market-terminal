@@ -5,6 +5,7 @@ import { ArrowRight, ArrowRightLeft, Layers, Link2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { Card } from '@/components/ui/card';
 import type { GraphEdge, GraphNode, NodeType } from '@/components/terminal/types';
 
 type NodePos = {
@@ -539,7 +540,7 @@ export function EvidenceFlow({
   }, [paths]);
 
   return (
-    <div className={cn('relative overflow-hidden rounded-2xl border border-white/10 bg-black/25', className)}>
+    <Card className={cn('relative overflow-hidden', className)}>
       <div className="pointer-events-none absolute inset-0 grid-overlay opacity-70" />
       <div
         ref={viewportRef}
@@ -800,6 +801,6 @@ export function EvidenceFlow({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

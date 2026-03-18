@@ -1,85 +1,168 @@
 @import "tailwindcss";
 
+/* ── shadcn design tokens ──────────────────────────────────────────── */
 :root {
-  --bg: #050913;
-  --panel: rgba(255, 255, 255, 0.055);
-  --panel-2: rgba(255, 255, 255, 0.035);
-  --border: rgba(255, 255, 255, 0.09);
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.62);
-  --muted-2: rgba(255, 255, 255, 0.44);
+  /* palette primitives (used by @theme inline) */
   --blue: #0066ff;
   --orange: #ff521c;
   --teal: #14b8a6;
-  --shadow: rgba(0, 0, 0, 0.55);
+
+  /* semantic tokens (dark) */
+  --background: #0a0a0b;
+  --foreground: rgba(255, 255, 255, 0.92);
+  --card: rgba(255, 255, 255, 0.055);
+  --card-foreground: rgba(255, 255, 255, 0.92);
+  --popover: #0f0f12;
+  --popover-foreground: rgba(255, 255, 255, 0.92);
+  --primary: #0066ff;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.08);
+  --secondary-foreground: rgba(255, 255, 255, 0.80);
+  --muted-bg: rgba(255, 255, 255, 0.05);
+  --muted-fg: rgba(255, 255, 255, 0.50);
+  --accent: rgba(255, 255, 255, 0.08);
+  --accent-foreground: rgba(255, 255, 255, 0.90);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --sh-border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.09);
+  --ring: rgba(0, 102, 255, 0.40);
+  --radius: 0.75rem;
 
   color-scheme: dark;
 }
 
+/* ── Tailwind v4 theme registration ───────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted-bg);
+  --color-muted-foreground: var(--muted-fg);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--sh-border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-blue: var(--blue);
+  --color-orange: var(--orange);
+  --color-teal: var(--teal);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-dialog-in: dialog-in 0.2s ease-out;
+  --animate-dialog-out: dialog-out 0.15s ease-in;
+  --animate-slide-in-from-right: slide-in-from-right 0.2s ease-out;
+  --animate-slide-out-to-right: slide-out-to-right 0.15s ease-in;
+  --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out;
+  --animate-slide-out-to-bottom: slide-out-to-bottom 0.15s ease-in;
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-fade-out: fade-out 0.1s ease-in;
+}
+
+/* ── Component animations ─────────────────────────────────────────── */
+@keyframes dialog-in {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes dialog-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.96) translateY(4px); }
+}
+@keyframes slide-in-from-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slide-out-to-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes slide-in-from-bottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes slide-out-to-bottom {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+/* ── Global base styles ───────────────────────────────────────────── */
 html,
 body {
   height: 100%;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
 }
 
+/* ── Background patterns ──────────────────────────────────────────── */
 .bg-terminal {
   background:
-    radial-gradient(900px 520px at 20% 10%, rgba(0, 102, 255, 0.22), transparent 62%),
-    radial-gradient(720px 520px at 78% 22%, rgba(255, 82, 28, 0.16), transparent 60%),
-    radial-gradient(640px 560px at 62% 88%, rgba(20, 184, 166, 0.10), transparent 60%),
-    linear-gradient(180deg, rgba(5, 9, 19, 0.96), rgba(5, 9, 19, 0.86));
+    radial-gradient(900px 520px at 20% 10%, rgba(0, 102, 255, 0.18), transparent 62%),
+    radial-gradient(720px 520px at 78% 22%, rgba(255, 82, 28, 0.12), transparent 60%),
+    radial-gradient(640px 560px at 62% 88%, rgba(20, 184, 166, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(10, 10, 11, 0.96), rgba(10, 10, 11, 0.86));
 }
 
 .grid-overlay {
   background-image:
-    /* minor grid */
-    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    /* major grid */
-    linear-gradient(rgba(255, 255, 255, 0.085) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.075) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
   background-size: 32px 32px, 32px 32px, 160px 160px, 160px 160px;
   mask-image: radial-gradient(circle at 50% 40%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.35) 74%, transparent 88%);
 }
 
+/* ── Utility animations ───────────────────────────────────────────── */
 @keyframes shimmer {
-  0% {
-    background-position: 220% 0;
-  }
-  100% {
-    background-position: -220% 0;
-  }
+  0% { background-position: 220% 0; }
+  100% { background-position: -220% 0; }
 }
 
 .shimmer {
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03),
-    rgba(255, 255, 255, 0.10),
-    rgba(255, 255, 255, 0.03)
-  );
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
   background-size: 220% 100%;
   animation: shimmer 1.7s ease-in-out infinite;
 }
 
 @keyframes financeFloat {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-    opacity: 0.2;
-  }
-  50% {
-    transform: translate3d(0, -14px, 0) rotate(4deg);
-    opacity: 0.42;
-  }
-  100% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-    opacity: 0.2;
-  }
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.2; }
+  50% { transform: translate3d(0, -14px, 0) rotate(4deg); opacity: 0.42; }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.2; }
 }
 
 .finance-float {
@@ -97,17 +180,9 @@ body {
 }
 
 @keyframes ripple {
-  0% {
-    transform: scale(0.2);
-    opacity: 0.82;
-  }
-  70% {
-    transform: scale(1);
-    opacity: 0;
-  }
-  100% {
-    opacity: 0;
-  }
+  0% { transform: scale(0.2); opacity: 0.82; }
+  70% { transform: scale(1); opacity: 0; }
+  100% { opacity: 0; }
 }
 
 .panel-sheen::before {
@@ -116,13 +191,12 @@ body {
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.18), rgba(255, 82, 28, 0.12), rgba(255, 255, 255, 0.08));
-  opacity: 0.55;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.14), rgba(255, 82, 28, 0.08), rgba(255, 255, 255, 0.06));
+  opacity: 0.45;
   mix-blend-mode: screen;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 62%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 62%);
 }
 
 .mono {
-  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
