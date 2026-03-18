@@ -5,8 +5,8 @@ import { listPublished } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Market Signals Dashboard - Asset Analysis Index',
-  description: 'Browse all assets analyzed by the Market Signal Terminal. View sentiment trends, catalysts, and historical reports.',
+  title: 'Asset Analysis Index | TrendAnalysis.ai',
+  description: 'Browse all assets analyzed by TrendAnalysis.ai. View sentiment trends, catalysts, and historical reports.',
 };
 
 const SENTIMENT_BADGE: Record<string, string> = {

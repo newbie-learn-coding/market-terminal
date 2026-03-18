@@ -25,7 +25,7 @@ export default function ArchitecturePage() {
                 </Link>
                 <div className="hidden h-9 w-px bg-white/10 sm:block" />
                 <div>
-                  <div className="text-xs font-semibold tracking-[0.22em] text-white/50">BRIGHT DATA</div>
+                  <div className="text-xs font-semibold tracking-[0.22em] text-white/50">TRENDANALYSIS.AI</div>
                   <div className="text-lg font-semibold text-white/90">Architecture</div>
                 </div>
               </div>

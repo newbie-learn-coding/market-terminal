@@ -336,7 +336,7 @@ export function createAIClient(config: AIConfig) {
     baseURL: config.baseURL,
     defaultHeaders: {
       // Optional but recommended by OpenRouter for analytics.
-      'X-Title': 'Bright Data Signal Terminal',
+      'X-Title': 'TrendAnalysis.ai',
     },
   });
 }

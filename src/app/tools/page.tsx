@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowUpRight, BarChart3, GitBranch, Newspaper } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Market Research Tools | Market Signal Terminal',
+  title: 'Market Research Tools | TrendAnalysis.ai',
   description:
-    'Free market research tools: market signal analyzer, evidence graph builder, and news impact analyzer. Powered by live data and AI.',
+    'Free market research tools: trend analyzer, evidence graph builder, and news impact analyzer. Powered by live data and AI.',
   keywords: [
     'market research tools',
     'stock analysis tools',
-    'market signal analyzer',
+    'trend analyzer',
     'evidence graph',
     'news analyzer',
   ],
@@ -19,7 +19,7 @@ const tools = [
   {
     href: '/tools/market-analyzer',
     icon: <BarChart3 className="h-5 w-5" />,
-    title: 'Market Signal Analyzer',
+    title: 'Trend Analyzer',
     description:
       'Search any market topic and get an AI-generated evidence map with live data from multiple sources, sentiment analysis, and entity extraction.',
   },

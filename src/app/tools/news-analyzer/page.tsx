@@ -3,7 +3,7 @@ import { Clock, Layers, Brain, TrendingUp } from 'lucide-react';
 import { ToolPageLayout } from '@/components/tools/ToolPageLayout';
 
 export const metadata: Metadata = {
-  title: 'News Impact Analyzer - Market News Analysis | Market Signal Terminal',
+  title: 'News Impact Analyzer - Market News Analysis | TrendAnalysis.ai',
   description:
     'Analyze how news impacts markets with timeline visualization, story clustering, sentiment analysis, and catalyst tracking. Free market news analyzer.',
   keywords: [

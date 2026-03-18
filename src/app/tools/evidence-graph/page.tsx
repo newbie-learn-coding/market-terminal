@@ -3,7 +3,7 @@ import { GitBranch, Boxes, Workflow, Zap } from 'lucide-react';
 import { ToolPageLayout } from '@/components/tools/ToolPageLayout';
 
 export const metadata: Metadata = {
-  title: 'Evidence Graph Builder - Market Knowledge Graph | Market Signal Terminal',
+  title: 'Evidence Graph Builder - Market Knowledge Graph | TrendAnalysis.ai',
   description:
     'Build interactive knowledge graphs from market evidence. Visualize relationships between assets, events, entities, and news sources with confidence scoring.',
   keywords: [

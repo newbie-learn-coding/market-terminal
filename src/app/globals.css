@@ -86,6 +86,16 @@ body {
   animation: financeFloat 7.5s ease-in-out infinite;
 }
 
+.pipeline-progress {
+  animation: pipelineSlide 2.5s ease-in-out infinite;
+}
+
+@keyframes pipelineSlide {
+  0% { width: 0%; }
+  50% { width: 88%; }
+  100% { width: 40%; }
+}
+
 @keyframes ripple {
   0% {
     transform: scale(0.2);

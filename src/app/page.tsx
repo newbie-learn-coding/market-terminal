@@ -5,20 +5,21 @@ import { listPublished } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Market Signal Analyzer - Evidence-Based Market Research Tool',
+  title: 'TrendAnalysis.ai - AI-Powered Market Research & Trend Analysis',
   description:
-    'Search any market topic and get live evidence maps, knowledge graphs, and AI-powered analysis. Free market signal analyzer powered by Bright Data.',
+    'Search any market topic and get live evidence maps, knowledge graphs, and AI-powered trend analysis. Free AI market research tool.',
   keywords: [
-    'market signal analyzer',
+    'trend analysis',
+    'trendanalysis.ai',
+    'AI market research',
     'evidence-based market research',
-    'stock analysis tool',
-    'market news analyzer',
     'knowledge graph',
+    'market trend analyzer',
   ],
   openGraph: {
-    title: 'Market Signal Analyzer - Evidence-Based Market Research',
+    title: 'TrendAnalysis.ai - AI-Powered Market Research & Trend Analysis',
     description:
-      'Search any market topic and get live evidence maps, knowledge graphs, and AI-powered analysis.',
+      'Search any market topic and get live evidence maps, knowledge graphs, and AI-powered trend analysis.',
     type: 'website',
   },
 };

@@ -3,12 +3,12 @@ import { Activity, Database, Link2, Layers } from 'lucide-react';
 import { ToolPageLayout } from '@/components/tools/ToolPageLayout';
 
 export const metadata: Metadata = {
-  title: 'Market Signal Analyzer - AI-Powered Market Research | Market Signal Terminal',
+  title: 'Trend Analyzer - AI-Powered Market Research | TrendAnalysis.ai',
   description:
     'Analyze any market topic with live SERP data, AI-powered evidence extraction, sentiment analysis, and entity linking. Free stock news analysis tool.',
   keywords: [
-    'market signal analyzer',
-    'stock news analysis tool',
+    'trend analyzer',
+    'trendanalysis.ai',
     'AI market research',
     'evidence-based analysis',
     'market sentiment tool',
@@ -100,9 +100,9 @@ function ExampleOutput() {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'Market Signal Analyzer',
+  name: 'Trend Analyzer',
   description:
-    'AI-powered market signal analyzer that aggregates live data from multiple sources for evidence-based market research.',
+    'AI-powered trend analyzer that aggregates live data from multiple sources for evidence-based market research.',
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -111,9 +111,9 @@ const jsonLd = {
 export default function MarketAnalyzerPage() {
   return (
     <ToolPageLayout
-      title="Market Signal Analyzer"
+      title="Trend Analyzer"
       description="Search any market topic and get AI-generated evidence maps with live data, sentiment analysis, and entity extraction from multiple sources."
-      keywords={['market signal analyzer', 'stock news analysis tool']}
+      keywords={['trend analyzer', 'AI market research tool']}
       features={features}
       searchPlaceholder="e.g. NVDA earnings impact, BTC halving effects..."
       exampleOutput={<ExampleOutput />}

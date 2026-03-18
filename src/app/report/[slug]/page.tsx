@@ -27,20 +27,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const arts = ((session.meta as Record<string, unknown>)?.artifacts ?? {}) as Record<string, unknown>;
   const evCount = Array.isArray(arts.evidence) ? arts.evidence.length : 0;
-  const description = `Market signal analysis for ${topic} — evidence-backed research with ${evCount} sources.`;
+  const description = `TrendAnalysis report for ${topic} — evidence-backed research with ${evCount} sources.`;
 
   return {
-    title: `${topic} — Market Signal Report`,
+    title: `${topic} — TrendAnalysis Report`,
     description,
     openGraph: {
-      title: `${topic} — Market Signal Report`,
+      title: `${topic} — TrendAnalysis Report`,
       description,
       type: 'article',
       url: `${basePath}/report/${slug}`,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${topic} — Market Signal Report`,
+      title: `${topic} — TrendAnalysis Report`,
       description,
     },
   };
@@ -88,12 +88,12 @@ export default async function ReportPage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${session.topic} — Market Signal Report`,
+    headline: `${session.topic} — TrendAnalysis Report`,
     datePublished: date,
-    description: `Market signal analysis for ${session.topic} with ${evidence.length} evidence sources.`,
+    description: `TrendAnalysis report for ${session.topic} with ${evidence.length} evidence sources.`,
     author: {
       '@type': 'Organization',
-      name: 'Bright Data Signal Terminal',
+      name: 'TrendAnalysis.ai',
     },
   };
 
@@ -172,7 +172,7 @@ export default async function ReportPage({ params }: Props) {
 
       <ShareBar
         url={pageUrl}
-        title={`${session.topic} — Market Signal Report`}
+        title={`${session.topic} — TrendAnalysis Report`}
         topic={session.topic}
       />
     </main>

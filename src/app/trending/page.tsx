@@ -5,7 +5,7 @@ import { listPublished } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Trending Market Topics - Market Signal Analysis Today',
+  title: 'Trending Market Topics | TrendAnalysis.ai',
   description:
     'Discover trending market topics and the latest evidence-based analyses. See what assets are being tracked and analyzed in real-time.',
   keywords: [
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     'market analysis today',
     'stock market trends',
     'crypto analysis',
-    'market signals',
+    'trend analysis',
   ],
 };
 
@@ -99,7 +99,7 @@ export default async function TrendingPage() {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Trending Market Topics',
-    description: 'Most analyzed market topics on Market Signal Terminal',
+    description: 'Most analyzed market topics on TrendAnalysis.ai',
     itemListElement: assets.slice(0, 20).map((asset, i) => ({
       '@type': 'ListItem',
       position: i + 1,

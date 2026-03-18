@@ -9,10 +9,10 @@ type Props = { params: Promise<{ key: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { key } = await params;
   const label = decodeURIComponent(key).replace(/-/g, ' ');
-  const title = `${label.charAt(0).toUpperCase() + label.slice(1)} Market Signals & Analysis History | Market Signal Terminal`;
+  const title = `${label.charAt(0).toUpperCase() + label.slice(1)} Trend Analysis & History | TrendAnalysis.ai`;
   return {
     title,
-    description: `Live market signals, sentiment trends and analysis history for ${label}.`,
+    description: `Live trend analysis, sentiment trends and analysis history for ${label}.`,
     openGraph: { title },
   };
 }
@@ -44,9 +44,9 @@ export default async function AssetPage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    name: `${capitalizedLabel} Market Signal Analysis`,
-    description: `Aggregated market signals, sentiment trends and analysis for ${label}.`,
-    creator: { '@type': 'Organization', name: 'Market Signal Terminal' },
+    name: `${capitalizedLabel} Market Analysis`,
+    description: `Aggregated trend analysis, sentiment trends and analysis for ${label}.`,
+    creator: { '@type': 'Organization', name: 'TrendAnalysis.ai' },
     distribution: [{ '@type': 'DataDownload', contentUrl: `https://trendanalysis.ai/asset/${key}` }],
   };
 

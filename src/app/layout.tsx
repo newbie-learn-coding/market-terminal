@@ -19,12 +19,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://trendanalysis.ai'),
   title: {
-    default: 'Market Signal Terminal',
-    template: '%s | Market Signal Terminal',
+    default: 'TrendAnalysis.ai',
+    template: '%s | TrendAnalysis.ai',
   },
-  description: 'Conversational market intelligence with evidence-linked maps.',
+  description: 'AI-powered trend analysis with real-time evidence maps and knowledge graphs.',
   openGraph: {
-    siteName: 'Market Signal Terminal',
+    siteName: 'TrendAnalysis.ai',
     locale: 'en_US',
     type: 'website',
   },

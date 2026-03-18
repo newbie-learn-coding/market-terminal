@@ -3,14 +3,14 @@ import { ImageResponse } from 'next/og';
 import { getBySlug } from '@/lib/db';
 
 export const runtime = 'nodejs';
-export const alt = 'Market Signal Report';
+export const alt = 'TrendAnalysis.ai Report';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function OgImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  let topic = 'Market Signal Report';
+  let topic = 'TrendAnalysis.ai Report';
   let date = '';
   let evidenceCount = 0;
   let nodeCount = 0;
@@ -60,7 +60,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
               marginBottom: 16,
             }}
           >
-            BRIGHT DATA SIGNAL TERMINAL
+            TRENDANALYSIS.AI
           </div>
           <div
             style={{

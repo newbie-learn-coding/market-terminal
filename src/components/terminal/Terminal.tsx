@@ -2687,7 +2687,7 @@ export function Terminal() {
                   </div>
                   <div>
                     <div className="text-xs font-semibold tracking-[0.22em] text-white/50">BRIGHT DATA</div>
-                    <div className="text-lg font-semibold text-white/90">Market Signal Terminal</div>
+                    <div className="text-lg font-semibold text-white/90">TrendAnalysis.ai</div>
                   </div>
                   <div className="hidden items-center gap-2 lg:flex">
                     <div className="h-2 w-2 rounded-full bg-[var(--teal)] shadow-[0_0_0_5px_rgba(20,184,166,0.12)]" />
