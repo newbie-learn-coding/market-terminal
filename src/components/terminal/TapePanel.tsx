@@ -1,6 +1,7 @@
 'use client';
 
 import { Activity } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
@@ -38,32 +39,33 @@ export function TapePanel({
   };
   onOpenEvidence: (title: string, evidenceIds: string[]) => void;
 }) {
+  const t = useTranslations('workspace');
   return (
     <Card>
       <CardHeader className="flex-row items-center gap-2 border-b border-white/[0.08]">
         <Activity className="h-4 w-4 text-white/80" />
         <div>
-          <CardTitle>Breaking Tape</CardTitle>
-          <CardDescription>Evidence-linked headlines</CardDescription>
+          <CardTitle>{t('tapeTitle')}</CardTitle>
+          <CardDescription>{t('tapeDesc')}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="p-5">
         {isEmpty ? (
           <div className="space-y-3">
             <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-center text-sm text-white/45">
-              No data yet. Run a topic to populate.
+              {t('noDataYet')}
             </div>
           </div>
         ) : tape.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/60">
-            No tape items yet.
+            {t('noTapeItems')}
           </div>
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
-              <Badge variant="teal" className="mono">headlines {tapeStats.headlineCount}</Badge>
-              <Badge className="mono">sources {tapeStats.uniqueSourceCount}</Badge>
-              <Badge className="mono">evidence {tapeStats.evidenceCount}</Badge>
+              <Badge variant="teal" className="mono">{t('headlines')} {tapeStats.headlineCount}</Badge>
+              <Badge className="mono">{t('sourcesCount')} {tapeStats.uniqueSourceCount}</Badge>
+              <Badge className="mono">{t('evidenceCount')} {tapeStats.evidenceCount}</Badge>
             </div>
             <div className="max-h-[320px] overflow-auto pr-1">
               <div className="space-y-2">

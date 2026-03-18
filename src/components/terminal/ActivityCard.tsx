@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Globe, LayoutDashboard, Layers, Link2, Search, Sparkles, TextQuote, TriangleAlert } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/card';
@@ -68,13 +69,23 @@ function queueDot(state: QueueItemState) {
   return 'bg-white/25';
 }
 
-function queueMeta(it: QueryQueueItem) {
-  if (it.state === 'running') return 'running';
-  if (it.state === 'failed') return 'failed';
-  if (typeof it.added === 'number') return `+${compactCount(it.added)} results`;
-  if (typeof it.foundTotal === 'number') return `${compactCount(it.foundTotal)} total`;
-  if (it.state === 'done') return 'done';
-  return 'queued';
+function queueMeta(it: QueryQueueItem, t: (k: string, v?: Record<string, string>) => string) {
+  if (it.state === 'running') return t('stateRunning');
+  if (it.state === 'failed') return t('stateFailed');
+  if (typeof it.added === 'number') return t('addedResults', { count: compactCount(it.added) });
+  if (typeof it.foundTotal === 'number') return t('totalResults', { count: compactCount(it.foundTotal) });
+  if (it.state === 'done') return t('stateDone');
+  return t('stateQueued');
+}
+
+function stateLabel(state: QueueItemState, t: (k: string) => string) {
+  const map: Record<QueueItemState, string> = {
+    queued: t('stateQueued'),
+    running: t('stateRunning'),
+    done: t('stateDone'),
+    failed: t('stateFailed'),
+  };
+  return map[state];
 }
 
 export function ActivityCard({
@@ -116,6 +127,7 @@ export function ActivityCard({
   graphVariant: string | null;
   className?: string;
 }) {
+  const t = useTranslations('workspace');
   const [expanded, setExpanded] = useState(false);
 
   const activeKey = stageKeyForStep(step);
@@ -131,13 +143,13 @@ export function ActivityCard({
 
   const stages = useMemo(() => {
     const base: Array<{ key: StageKey; label: string; icon: LucideIcon }> = [
-      { key: 'plan', label: 'Plan', icon: Sparkles },
-      { key: 'search', label: 'Search', icon: Search },
-      { key: 'scrape', label: 'Scrape', icon: Globe },
-      { key: 'extract', label: 'Extract', icon: TextQuote },
-      { key: 'link', label: 'Link', icon: Link2 },
-      { key: 'cluster', label: 'Cluster', icon: Layers },
-      { key: 'render', label: 'Render', icon: LayoutDashboard },
+      { key: 'plan', label: t('pipelinePlan'), icon: Sparkles },
+      { key: 'search', label: t('pipelineSearch'), icon: Search },
+      { key: 'scrape', label: t('pipelineScrape'), icon: Globe },
+      { key: 'extract', label: t('pipelineExtract'), icon: TextQuote },
+      { key: 'link', label: t('pipelineLink'), icon: Link2 },
+      { key: 'cluster', label: t('pipelineCluster'), icon: Layers },
+      { key: 'render', label: t('pipelineRender'), icon: LayoutDashboard },
     ];
 
     return base.map((s) => {
@@ -156,7 +168,7 @@ export function ActivityCard({
       }
       return { ...s, status };
     });
-  }, [activeIdx, mode, step]);
+  }, [activeIdx, mode, step, t]);
 
   const queuedCounts = useMemo(() => {
     const q = queryQueue || [];
@@ -177,10 +189,10 @@ export function ActivityCard({
   }, [scrapeQueue]);
 
   const headerLabel = useMemo(() => {
-    if (step === 'idle') return 'Idle';
-    if (step === 'ready') return 'Ready';
+    if (step === 'idle') return t('idle');
+    if (step === 'ready') return t('ready');
     return step.toUpperCase();
-  }, [step]);
+  }, [step, t]);
 
   const focusDetail = useMemo(() => {
     if (!expanded) return null;
@@ -188,7 +200,7 @@ export function ActivityCard({
     if (focus === 'plan') {
       return (
         <div className="space-y-2">
-          <SectionLabel className="mb-0">Planned Queries</SectionLabel>
+          <SectionLabel className="mb-0">{t('plannedQueries')}</SectionLabel>
           {plan?.queries?.length ? (
             <div className="space-y-1">
               {plan.queries.slice(0, 10).map((q) => (
@@ -198,7 +210,7 @@ export function ActivityCard({
               ))}
             </div>
           ) : (
-            <div className="text-sm text-white/60">Planning...</div>
+            <div className="text-sm text-white/60">{t('planning')}</div>
           )}
           {plan?.angles?.length ? (
             <div className="flex flex-wrap gap-2 pt-1 text-[11px] text-white/55">
@@ -216,7 +228,7 @@ export function ActivityCard({
     if (focus === 'search') {
       return (
         <div className="space-y-3">
-          <SectionLabel className="mb-0">Search Queries</SectionLabel>
+          <SectionLabel className="mb-0">{t('searchQueries')}</SectionLabel>
           {queryQueue.length ? (
             <div className="space-y-2">
               {queryQueue.map((it) => (
@@ -225,19 +237,19 @@ export function ActivityCard({
                     <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', queueDot(it.state))} />
                     <div className="min-w-0">
                       <div className="text-sm text-white/78">{it.query}</div>
-                      <div className="mt-0.5 text-[11px] text-white/45 mono">{queueMeta(it)}</div>
+                      <div className="mt-0.5 text-[11px] text-white/45 mono">{queueMeta(it, t)}</div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-sm text-white/60">Waiting for queries...</div>
+            <div className="text-sm text-white/60">{t('waitingForQueries')}</div>
           )}
 
           {search?.results?.length ? (
             <>
-              <SectionLabel className="mb-0">Top Results</SectionLabel>
+              <SectionLabel className="mb-0">{t('topResults')}</SectionLabel>
               <div className="space-y-1">
                 {search.results.slice(0, 6).map((r) => (
                   <a
@@ -259,10 +271,10 @@ export function ActivityCard({
     }
 
     if (focus === 'scrape') {
-      if (mode !== 'deep') return <div className="text-sm text-white/60">Scrape is skipped in Fast mode.</div>;
+      if (mode !== 'deep') return <div className="text-sm text-white/60">{t('scrapeSkipped')}</div>;
       return (
         <div className="space-y-2">
-          <SectionLabel className="mb-0">Scrape Pages</SectionLabel>
+          <SectionLabel className="mb-0">{t('scrapePages')}</SectionLabel>
           {scrapeQueue.length ? (
             <div className="space-y-2">
               {scrapeQueue.map((it) => (
@@ -271,14 +283,14 @@ export function ActivityCard({
                     <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', queueDot(it.state))} />
                     <div className="min-w-0">
                       <div className="text-sm text-white/78">{domainFromUrl(it.url)}</div>
-                      <div className="mt-0.5 text-[11px] text-white/45 mono">{it.state}</div>
+                      <div className="mt-0.5 text-[11px] text-white/45 mono">{stateLabel(it.state, t)}</div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-sm text-white/60">Waiting for scrape step...</div>
+            <div className="text-sm text-white/60">{t('waitingForScrape')}</div>
           )}
         </div>
       );
@@ -288,9 +300,9 @@ export function ActivityCard({
       const uniq = Array.from(new Set((evidenceSources || []).map((s) => String(s || '').trim()).filter(Boolean))).slice(0, 10);
       return (
         <div className="space-y-2">
-          <SectionLabel className="mb-0">Evidence</SectionLabel>
+          <SectionLabel className="mb-0">{t('evidenceLabel')}</SectionLabel>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
-            {compactCount(evidenceCount)} items{summariesCount ? ` · ${compactCount(summariesCount)} summarized` : ''}
+            {t('itemsCount', { count: compactCount(evidenceCount) })}{summariesCount ? ` · ${t('summarizedCount', { count: compactCount(summariesCount) })}` : ''}
           </div>
           {uniq.length ? (
             <div className="flex flex-wrap gap-2 text-[11px] text-white/55">
@@ -306,14 +318,14 @@ export function ActivityCard({
     }
 
     if (focus === 'link') {
-      const v = graphVariant === 'expanded' ? 'expanded impact pass' : graphVariant === 'initial' ? 'initial map' : 'map';
+      const v = graphVariant === 'expanded' ? t('expandedPass') : graphVariant === 'initial' ? t('initialMap') : t('mapVariant');
       return (
         <div className="space-y-2">
-          <SectionLabel className="mb-0">Map</SectionLabel>
+          <SectionLabel className="mb-0">{t('mapLabel')}</SectionLabel>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
-            {compactCount(nodesCount)} nodes · {compactCount(edgesCount)} edges · {v}
+            {t('nodesCount', { count: compactCount(nodesCount) })} · {t('edgesCount', { count: compactCount(edgesCount) })} · {v}
           </div>
-          <div className="text-xs text-white/55">Tip: click a node or edge to open evidence in the Inspector.</div>
+          <div className="text-xs text-white/55">{t('tipClickNode')}</div>
         </div>
       );
     }
@@ -321,9 +333,9 @@ export function ActivityCard({
     if (focus === 'cluster') {
       return (
         <div className="space-y-2">
-          <SectionLabel className="mb-0">Narratives</SectionLabel>
+          <SectionLabel className="mb-0">{t('narrativesLabel')}</SectionLabel>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
-            {compactCount(clustersCount)} clusters
+            {t('clustersCount', { count: compactCount(clustersCount) })}
           </div>
         </div>
       );
@@ -331,9 +343,9 @@ export function ActivityCard({
 
     return (
       <div className="space-y-2">
-        <SectionLabel className="mb-0">Render</SectionLabel>
+        <SectionLabel className="mb-0">{t('render')}</SectionLabel>
         <div className="rounded-xl border border-white/10 bg-white/[0.03] px-2.5 py-2 text-sm text-white/75">
-          Panels updated.
+          {t('panelsUpdatedShort')}
         </div>
       </div>
     );
@@ -353,6 +365,7 @@ export function ActivityCard({
     summariesCount,
     nodesCount,
     edgesCount,
+    t,
   ]);
 
   return (
@@ -360,7 +373,7 @@ export function ActivityCard({
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <SectionLabel>Activity</SectionLabel>
+            <SectionLabel>{t('activityTitle')}</SectionLabel>
             {warningsCount ? (
               <Badge variant="orange" className="gap-1">
                 <TriangleAlert className="h-3.5 w-3.5" /> {warningsCount}
@@ -373,7 +386,7 @@ export function ActivityCard({
               <span className="mx-1 text-white/35">&middot;</span>
               <span className="mono">{Math.round(Math.max(0, Math.min(1, progress)) * 100)}%</span>
             </Badge>
-            <Badge>{mode === 'deep' ? 'Deep' : 'Fast'}</Badge>
+            <Badge>{mode === 'deep' ? t('deep') : t('fast')}</Badge>
             <Badge>{provider || 'ai'}</Badge>
           </div>
         </div>
@@ -384,13 +397,13 @@ export function ActivityCard({
           aria-label={expanded ? 'Collapse activity details' : 'Expand activity details'}
         >
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          Details
+          {t('activityDetails')}
         </button>
       </div>
 
       {step === 'idle' ? (
         <div className="mt-3 text-xs leading-relaxed text-white/55">
-          Ask a topic to start. The system will plan queries, pull sources with Bright Data, and build an evidence map you can inspect.
+          {t('activityHint')}
         </div>
       ) : null}
 
@@ -407,32 +420,32 @@ export function ActivityCard({
           const right = (() => {
             if (isPlan) {
               const q = plan?.queries?.length || 0;
-              return q ? `${q} queries` : s.status === 'active' ? 'planning' : '';
+              return q ? t('queriesCount', { count: q }) : s.status === 'active' ? t('planning') : '';
             }
             if (isSearch) {
-              const t = queuedCounts.total;
-              if (!t) return search?.results?.length ? `${search.results.length} results` : s.status === 'active' ? 'running' : '';
-              return `${queuedCounts.done}/${t}${queuedCounts.failed ? ` (${queuedCounts.failed} fail)` : ''}`;
+              const total = queuedCounts.total;
+              if (!total) return search?.results?.length ? t('resultsCount', { count: search.results.length }) : s.status === 'active' ? t('runningStatus') : '';
+              return `${queuedCounts.done}/${total}${queuedCounts.failed ? ` ${t('failCount', { count: queuedCounts.failed })}` : ''}`;
             }
             if (isScrape) {
-              if (mode !== 'deep') return 'skipped';
-              if (!scrapeCounts.total) return s.status === 'active' ? 'starting' : '';
-              return `${scrapeCounts.done}/${scrapeCounts.total}${scrapeCounts.failed ? ` (${scrapeCounts.failed} fail)` : ''}`;
+              if (mode !== 'deep') return t('skipped');
+              if (!scrapeCounts.total) return s.status === 'active' ? t('starting') : '';
+              return `${scrapeCounts.done}/${scrapeCounts.total}${scrapeCounts.failed ? ` ${t('failCount', { count: scrapeCounts.failed })}` : ''}`;
             }
             if (isExtract) {
               const ev = compactCount(evidenceCount);
-              const sum = summariesCount ? ` · ${compactCount(summariesCount)} summaries` : '';
-              return evidenceCount ? `${ev} evidence${sum}` : s.status === 'active' ? 'extracting' : '';
+              const sum = summariesCount ? ` · ${t('summariesCount', { count: compactCount(summariesCount) })}` : '';
+              return evidenceCount ? `${t('evidenceN', { count: ev })}${sum}` : s.status === 'active' ? t('extracting') : '';
             }
             if (isLink) {
-              const v = graphVariant === 'expanded' ? ' · expanded' : graphVariant === 'initial' ? ' · initial' : '';
-              return nodesCount ? `${compactCount(nodesCount)} n · ${compactCount(edgesCount)} e${v}` : s.status === 'active' ? 'linking' : '';
+              const v = graphVariant === 'expanded' ? ` · ${t('expandedPass')}` : graphVariant === 'initial' ? ` · ${t('initialMap')}` : '';
+              return nodesCount ? `${compactCount(nodesCount)} n · ${compactCount(edgesCount)} e${v}` : s.status === 'active' ? t('linkingStatus') : '';
             }
             if (isCluster) {
-              return clustersCount ? `${compactCount(clustersCount)} clusters` : s.status === 'active' ? 'clustering' : '';
+              return clustersCount ? t('clustersCount', { count: compactCount(clustersCount) }) : s.status === 'active' ? t('clusteringStatus') : '';
             }
             if (s.key === 'render') {
-              return s.status === 'done' ? 'panels updated' : s.status === 'active' ? 'updating' : '';
+              return s.status === 'done' ? t('panelsUpdatedLower') : s.status === 'active' ? t('updatingStatus') : '';
             }
             return '';
           })();
@@ -466,14 +479,14 @@ export function ActivityCard({
       {expanded ? (
         <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <SectionLabel className="mb-0">Details</SectionLabel>
+            <SectionLabel className="mb-0">{t('activityDetails')}</SectionLabel>
             <button
               type="button"
               className="text-[11px] font-semibold text-white/55 hover:text-white/75"
               onClick={() => setPinnedFocus(false)}
               title="Follow the active stage"
             >
-              Follow active
+              {t('followActive')}
             </button>
           </div>
           <div className="mt-2 max-h-64 overflow-auto pr-1">{focusDetail}</div>

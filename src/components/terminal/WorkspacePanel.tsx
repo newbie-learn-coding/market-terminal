@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { Maximize2, Network } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -97,19 +98,20 @@ export function WorkspacePanel({
   onToggleChat: () => void;
   onOpenEvidence: (title: string, evidenceIds: string[]) => void;
 }) {
+  const t = useTranslations('workspace');
   return (
     <Card className="lg:min-h-[68vh]">
       <CardHeader className="flex-row items-start justify-between gap-3 border-b border-white/[0.08]">
         <div className="flex items-center gap-2">
           <Network className="h-4 w-4 text-white/80" />
           <div>
-            <CardTitle>Evidence Workspace</CardTitle>
+            <CardTitle>{t('title')}</CardTitle>
             <CardDescription>
               {isEmpty
-                ? 'Run a topic, then work directly in Graph / Mind / Flow / Timeline'
+                ? t('descEmpty')
                 : hasWorkspaceGraph || evidenceView === 'timeline'
-                  ? 'Map-first view with linked evidence, media, and timeline filters'
-                  : 'Generating workspace graph...'}
+                  ? t('descActive')
+                  : t('generating')}
             </CardDescription>
           </div>
         </div>
@@ -122,7 +124,7 @@ export function WorkspacePanel({
             disabled={!hasWorkspaceGraph && evidenceView !== 'timeline'}
           >
             <Maximize2 className="h-4 w-4" />
-            Full
+            {t('full')}
           </Button>
           <Button
             variant="outline"
@@ -130,7 +132,7 @@ export function WorkspacePanel({
             onClick={onToggleChat}
             className="border-white/12 bg-white/[0.03]"
           >
-            {chatPanelOpen ? 'Hide chat' : 'Chat'}
+            {chatPanelOpen ? t('hideChat') : t('chat')}
           </Button>
         </div>
       </CardHeader>
@@ -141,9 +143,9 @@ export function WorkspacePanel({
             <div className="pointer-events-none absolute inset-0 opacity-70 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:54px_54px]" />
             <div className="relative grid h-[56vh] min-h-[340px] place-items-center">
               <div className="max-w-sm text-center">
-                <div className="text-sm font-semibold text-white/85">Empty workspace</div>
+                <div className="text-sm font-semibold text-white/85">{t('emptyTitle')}</div>
                 <div className="mt-1 text-xs leading-relaxed text-white/55">
-                  Run a topic and the map will include evidence, media links, and timeline points.
+                  {t('emptyDesc')}
                 </div>
               </div>
             </div>
@@ -156,21 +158,21 @@ export function WorkspacePanel({
                 onValueChange={(v) => onEvidenceViewChange(v as EvidenceView)}
               >
                 <TabsList>
-                  <TabsTrigger value="graph" disabled={!hasWorkspaceGraph && evidenceView !== 'timeline'}>Graph</TabsTrigger>
-                  <TabsTrigger value="mind" disabled={!hasWorkspaceGraph && evidenceView !== 'timeline'}>Mind</TabsTrigger>
-                  <TabsTrigger value="flow" disabled={!hasWorkspaceGraph && evidenceView !== 'timeline'}>Flow</TabsTrigger>
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                  <TabsTrigger value="graph" disabled={!hasWorkspaceGraph && evidenceView !== 'timeline'}>{t('viewGraph')}</TabsTrigger>
+                  <TabsTrigger value="mind" disabled={!hasWorkspaceGraph && evidenceView !== 'timeline'}>{t('viewMind')}</TabsTrigger>
+                  <TabsTrigger value="flow" disabled={!hasWorkspaceGraph && evidenceView !== 'timeline'}>{t('viewFlow')}</TabsTrigger>
+                  <TabsTrigger value="timeline">{t('viewTimeline')}</TabsTrigger>
                 </TabsList>
               </Tabs>
               <div className="flex flex-wrap items-center gap-2 text-[11px] text-white/55">
                 <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                  nodes <span className="mono text-white/75">{workspaceGraph.nodes.length}</span>
+                  {t('nodes')} <span className="mono text-white/75">{workspaceGraph.nodes.length}</span>
                 </span>
                 <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                  edges <span className="mono text-white/75">{workspaceGraph.edges.length}</span>
+                  {t('edges')} <span className="mono text-white/75">{workspaceGraph.edges.length}</span>
                 </span>
                 <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                  evidence <span className="mono text-white/75">{session?.evidence.length ?? 0}</span>
+                  {t('evidence')} <span className="mono text-white/75">{session?.evidence.length ?? 0}</span>
                 </span>
               </div>
             </div>
@@ -185,7 +187,7 @@ export function WorkspacePanel({
                   )}
                   onClick={() => onSelectTag(null)}
                 >
-                  all
+                  {t('all')}
                 </button>
                 {tagOptions.map((tag) => (
                   <button
@@ -207,8 +209,8 @@ export function WorkspacePanel({
 
             {snapshotLoading ? (
               <WorkspaceLoading
-                title="Opening Snapshot"
-                subtitle="Restoring your saved evidence map and timeline exactly as captured."
+                title={t('openingSnapshot')}
+                subtitle={t('openingSnapshotDesc')}
               />
             ) : evidenceView === 'timeline' ? (
               <EvidenceTimeline
@@ -224,8 +226,8 @@ export function WorkspacePanel({
               />
             ) : !hasWorkspaceGraph ? (
               <WorkspaceLoading
-                title="Building Evidence Map"
-                subtitle="Linking sources, events, assets, and media into a single map workspace."
+                title={t('buildingMap')}
+                subtitle={t('buildingMapDesc')}
                 stage={stepLabel}
               />
             ) : evidenceView === 'graph' ? (

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ export function EvidenceViewToggle({
   disabled?: boolean;
   className?: string;
 }) {
+  const t = useTranslations('workspace');
   return (
     <Tabs
       value={value}
@@ -23,10 +25,10 @@ export function EvidenceViewToggle({
       className={cn(disabled ? 'pointer-events-none opacity-60' : '', className)}
     >
       <TabsList aria-label="Evidence view">
-        <TabsTrigger value="graph">Graph</TabsTrigger>
-        <TabsTrigger value="mind">Mind</TabsTrigger>
-        <TabsTrigger value="flow">Flow</TabsTrigger>
-        <TabsTrigger value="timeline">Timeline</TabsTrigger>
+        <TabsTrigger value="graph">{t('viewGraph')}</TabsTrigger>
+        <TabsTrigger value="mind">{t('viewMind')}</TabsTrigger>
+        <TabsTrigger value="flow">{t('viewFlow')}</TabsTrigger>
+        <TabsTrigger value="timeline">{t('viewTimeline')}</TabsTrigger>
       </TabsList>
     </Tabs>
   );

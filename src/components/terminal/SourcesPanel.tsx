@@ -1,6 +1,7 @@
 'use client';
 
 import { Globe } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 type EvidenceItem = {
@@ -30,23 +31,24 @@ export function SourcesPanel({
   evidence: EvidenceItem[];
   onOpenEvidence: (title: string, evidenceIds: string[]) => void;
 }) {
+  const t = useTranslations('workspace');
   return (
     <Card>
       <CardHeader className="flex-row items-center gap-2 border-b border-white/[0.08]">
         <Globe className="h-4 w-4 text-white/80" />
         <div>
-          <CardTitle>Sources</CardTitle>
-          <CardDescription>Domains used in this run</CardDescription>
+          <CardTitle>{t('sourcesTitle')}</CardTitle>
+          <CardDescription>{t('sourcesDesc')}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="p-5">
         {isEmpty ? (
           <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-6 text-center text-sm text-white/45">
-            No data yet. Run a topic to populate.
+            {t('noDataYet')}
           </div>
         ) : sourceStats.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/60">
-            No sources found.
+            {t('noSourcesFound')}
           </div>
         ) : (
           <div className="max-h-[320px] overflow-auto pr-1">
@@ -66,7 +68,7 @@ export function SourcesPanel({
                     <div className="text-[11px] text-white/45 mono">{s.count}</div>
                   </div>
                   <div className="mt-1 text-[11px] text-white/55">
-                    {s.latestKind === 'published' ? 'Published' : 'Observed'} {formatTime(s.latestAt)}
+                    {s.latestKind === 'published' ? t('published') : t('observed')} {formatTime(s.latestAt)}
                   </div>
                 </button>
               ))}

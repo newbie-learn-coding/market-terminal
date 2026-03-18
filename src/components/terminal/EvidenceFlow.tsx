@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ArrowRightLeft, Layers, Link2 } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/card';
@@ -51,9 +52,11 @@ function edgeConfidence(edge: GraphEdge) {
   return Math.max(0, Math.min(1, c));
 }
 
-function edgeTypeLabel(type: GraphEdge['type']) {
-  if (type === 'co_moves') return 'co-moves';
-  if (type === 'same_story') return 'same-story';
+function edgeTypeLabel(type: GraphEdge['type'], t: (k: string) => string) {
+  if (type === 'mentions') return t('mentionsLabel');
+  if (type === 'co_moves') return t('coMovesLabel');
+  if (type === 'hypothesis') return t('hypothesisLabel');
+  if (type === 'same_story') return t('sameStoryLabel');
   return type;
 }
 
@@ -88,6 +91,7 @@ export function EvidenceFlow({
   className?: string;
   viewportClassName?: string;
 }) {
+  const t = useTranslations('workspace');
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ w: 980, h: 430 });
@@ -127,13 +131,13 @@ export function EvidenceFlow({
     const sort = (arr: GraphNode[]) =>
       [...arr].sort((a, b) => (degreeById.get(String(b.id)) || 0) - (degreeById.get(String(a.id)) || 0));
     return [
-      { type: 'source' as const, label: 'Sources', icon: <Layers className="h-4 w-4" />, items: sort(byType.source) },
-      { type: 'event' as const, label: 'Events', icon: <ArrowRightLeft className="h-4 w-4" />, items: sort(byType.event) },
-      { type: 'asset' as const, label: 'Assets', icon: <Link2 className="h-4 w-4" />, items: sort(byType.asset) },
-      { type: 'entity' as const, label: 'Actors', icon: <Layers className="h-4 w-4" />, items: sort(byType.entity) },
-      { type: 'media' as const, label: 'Media', icon: <Layers className="h-4 w-4" />, items: sort(byType.media) },
+      { type: 'source' as const, label: t('sources'), icon: <Layers className="h-4 w-4" />, items: sort(byType.source) },
+      { type: 'event' as const, label: t('events'), icon: <ArrowRightLeft className="h-4 w-4" />, items: sort(byType.event) },
+      { type: 'asset' as const, label: t('assets'), icon: <Link2 className="h-4 w-4" />, items: sort(byType.asset) },
+      { type: 'entity' as const, label: t('actors'), icon: <Layers className="h-4 w-4" />, items: sort(byType.entity) },
+      { type: 'media' as const, label: t('media'), icon: <Layers className="h-4 w-4" />, items: sort(byType.media) },
     ];
-  }, [degreeById, nodes]);
+  }, [degreeById, nodes, t]);
 
   const drawEdges = useMemo(() => {
     if (!edges.length || !nodes.length) return [];
@@ -589,23 +593,23 @@ export function EvidenceFlow({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Badge tone="blue" className="mono">
-                FLOW
+                {t('flowBadge')}
               </Badge>
-              <div className="text-xs text-white/55">Lane view with strongest links. Click a node or line to focus the path.</div>
+              <div className="text-xs text-white/55">{t('flowDesc')}</div>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-white/55">
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                nodes <span className="mono text-white/75">{nodes.length}</span>
+                {t('nodes')} <span className="mono text-white/75">{nodes.length}</span>
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                edges <span className="mono text-white/75">{edges.length}</span>
+                {t('edges')} <span className="mono text-white/75">{edges.length}</span>
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                drawn <span className="mono text-white/75">{paths.length}</span>
+                {t('drawnLabel')} <span className="mono text-white/75">{paths.length}</span>
               </span>
               {hasFocus ? (
                 <span className="rounded-full border border-[rgba(153,197,255,0.35)] bg-[rgba(0,102,255,0.12)] px-2.5 py-1 text-[rgba(153,197,255,0.95)]">
-                  focus on
+                  {t('focusOn')}
                 </span>
               ) : null}
             </div>
@@ -613,16 +617,16 @@ export function EvidenceFlow({
 
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-white/50">
             <span className="inline-flex items-center gap-1">
-              <span className="h-0 w-5 border-t border-white/45" /> mentions {edgeTypeCounts.mentions}
+              <span className="h-0 w-5 border-t border-white/45" /> {t('mentionsLabel')} {edgeTypeCounts.mentions}
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="h-0 w-5 border-t border-[rgba(0,102,255,0.65)]" /> co-moves {edgeTypeCounts.co_moves}
+              <span className="h-0 w-5 border-t border-[rgba(0,102,255,0.65)]" /> {t('coMovesLabel')} {edgeTypeCounts.co_moves}
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="h-0 w-5 border-t border-dashed border-[rgba(255,82,28,0.75)]" /> hypothesis {edgeTypeCounts.hypothesis}
+              <span className="h-0 w-5 border-t border-dashed border-[rgba(255,82,28,0.75)]" /> {t('hypothesisLabel')} {edgeTypeCounts.hypothesis}
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="h-0 w-5 border-t border-[rgba(20,184,166,0.75)]" /> same-story {edgeTypeCounts.same_story}
+              <span className="h-0 w-5 border-t border-[rgba(20,184,166,0.75)]" /> {t('sameStoryLabel')} {edgeTypeCounts.same_story}
             </span>
           </div>
 
@@ -635,8 +639,7 @@ export function EvidenceFlow({
                   </span>
                   <span className="text-white/60">
                     {' '}
-                    connected with {selectedNodeConnections.neighbors.length} node{selectedNodeConnections.neighbors.length === 1 ? '' : 's'} across{' '}
-                    {selectedNodeConnections.edgeCountTotal} visible link{selectedNodeConnections.edgeCountTotal === 1 ? '' : 's'}
+                    {t('connectedWith', { nodeCount: selectedNodeConnections.neighbors.length, linkCount: selectedNodeConnections.edgeCountTotal })}
                   </span>
                 </div>
                 <button
@@ -647,7 +650,7 @@ export function EvidenceFlow({
                     onSelectEdge(null);
                   }}
                 >
-                  Clear focus
+                  {t('clearFocus')}
                 </button>
               </div>
 
@@ -656,7 +659,7 @@ export function EvidenceFlow({
                   .filter(([, count]) => count > 0)
                   .map(([type, count]) => (
                     <span key={type} className="rounded-full border border-white/12 bg-white/[0.05] px-2.5 py-1 text-white/70">
-                      {edgeTypeLabel(type)} {count}
+                      {edgeTypeLabel(type, t)} {count}
                     </span>
                   ))}
               </div>
@@ -687,7 +690,7 @@ export function EvidenceFlow({
                 })}
                 {selectedNodeConnections.neighbors.length > 16 ? (
                   <span className="rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/55">
-                    +{selectedNodeConnections.neighbors.length - 16} more
+                    {t('moreItems', { count: selectedNodeConnections.neighbors.length - 16 })}
                   </span>
                 ) : null}
               </div>
@@ -701,7 +704,7 @@ export function EvidenceFlow({
                   <span className={cn('font-semibold', toneForNode(selectedEdgeSummary.to.type).text)}>{selectedEdgeSummary.to.label}</span>
                   <span className="text-white/55">
                     {' '}
-                    {edgeTypeLabel(selectedEdgeSummary.edge.type)} · {(edgeConfidence(selectedEdgeSummary.edge) * 100).toFixed(0)}%
+                    {edgeTypeLabel(selectedEdgeSummary.edge.type, t)} · {(edgeConfidence(selectedEdgeSummary.edge) * 100).toFixed(0)}%
                   </span>
                 </div>
                 <button
@@ -712,7 +715,7 @@ export function EvidenceFlow({
                     onSelectNode(null);
                   }}
                 >
-                  Clear focus
+                  {t('clearFocus')}
                 </button>
               </div>
             </div>
@@ -731,7 +734,7 @@ export function EvidenceFlow({
                 <div className="mt-2 space-y-2">
                   {col.items.length === 0 ? (
                     <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/60">
-                      None
+                      {t('none')}
                     </div>
                   ) : (
                     col.items.slice(0, 22).map((n) => {
@@ -765,13 +768,13 @@ export function EvidenceFlow({
                           >
                             <div className="flex items-center justify-between gap-3">
                               <div className={cn('truncate font-semibold', tone.text)}>{n.label}</div>
-                              {hasFocus && related && !sel ? <div className="mono text-[10px] text-white/50">linked</div> : null}
+                              {hasFocus && related && !sel ? <div className="mono text-[10px] text-white/50">{t('linkedLabel')}</div> : null}
                             </div>
                           </button>
                           <button
                             type="button"
                             className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-white/12 bg-white/[0.04] text-white/55 transition hover:text-white"
-                            title={`Open ${n.label} in inspector`}
+                            title={t('openInInspector', { label: n.label })}
                             onClick={() => {
                               setHoveredEdgeId(null);
                               flowDebug('pill.inspect.click', { nodeId: id, label: n.label, type: n.type });
@@ -788,7 +791,7 @@ export function EvidenceFlow({
                   )}
                   {col.items.length > 22 ? (
                     <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] text-white/55">
-                      Showing top 22. Use Graph for the full set.
+                      {t('showingTop')}
                     </div>
                   ) : null}
                 </div>
@@ -797,7 +800,7 @@ export function EvidenceFlow({
           </div>
 
           <div className="mt-3 text-[11px] text-white/45">
-            Tip: click a pill to highlight connected routes (no inspector jump), or click a line to focus that exact edge.
+            {t('flowTip')}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useCallback, useId, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { Activity, ExternalLink, RefreshCw } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -324,6 +325,7 @@ export function PricePanel({
   onScaleModeChange: (m: PriceScaleMode) => void;
   onCompareTopicChange: (t: string | null) => void;
 }) {
+  const t = useTranslations('workspace');
   const isEmpty = !session;
 
   const comparePresets = useMemo(() => {
@@ -350,15 +352,15 @@ export function PricePanel({
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-white/80" />
           <div>
-            <CardTitle>Price Context</CardTitle>
+            <CardTitle>{t('priceTitle')}</CardTitle>
             <CardDescription>
-              {priceScaleMode === 'indexed' ? 'Indexed mode (start = 100)' : 'Price mode'}
+              {priceScaleMode === 'indexed' ? t('priceIndexedMode') : t('priceMode')}
             </CardDescription>
           </div>
         </div>
         {session ? (
           <div className="flex flex-wrap items-center gap-2">
-            {price ? <Badge variant={price.ok ? 'teal' : 'neutral'}>{price.ok ? 'LIVE' : 'FALLBACK'}</Badge> : null}
+            {price ? <Badge variant={price.ok ? 'teal' : 'neutral'}>{price.ok ? t('live') : t('fallback')}</Badge> : null}
             <Button
               variant="outline"
               size="sm"
@@ -367,7 +369,7 @@ export function PricePanel({
               className="border-white/12 bg-white/[0.03]"
             >
               <RefreshCw className={cn('h-4 w-4', priceLoading || priceCompareLoading ? 'animate-spin' : '')} />
-              Refresh
+              {t('refresh')}
             </Button>
           </div>
         ) : null}
@@ -375,7 +377,7 @@ export function PricePanel({
       <CardContent className="p-5">
         {isEmpty ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/60">
-            Run a topic to render price context.
+            {t('runTopicForPrice')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -384,14 +386,14 @@ export function PricePanel({
                 {price?.ok ? `${price.symbol || session.topic} (USD)` : `${session.topic} (proxy)`}
               </div>
               <div className="text-xs text-white/55">
-                last{' '}
+                {t('last')}{' '}
                 <span className="mono text-white/80">
                   {session.series.length ? formatSparkValue(session.series[session.series.length - 1]!, 'price') : 'n/a'}
                 </span>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
-              <span className="text-white/45">Scale</span>
+              <span className="text-white/45">{t('scale')}</span>
               <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] p-1">
                 <button
                   type="button"
@@ -401,7 +403,7 @@ export function PricePanel({
                   )}
                   onClick={() => onScaleModeChange('price')}
                 >
-                  Price
+                  {t('price')}
                 </button>
                 <button
                   type="button"
@@ -411,10 +413,10 @@ export function PricePanel({
                   )}
                   onClick={() => onScaleModeChange('indexed')}
                 >
-                  Indexed
+                  {t('indexed')}
                 </button>
               </div>
-              <span className="ml-2 text-white/45">Compare</span>
+              <span className="ml-2 text-white/45">{t('compare')}</span>
               {comparePresets.map((preset) => {
                 const selected = normalizeTopicKey(priceCompareTopic || '') === normalizeTopicKey(preset.topic);
                 return (
@@ -443,7 +445,7 @@ export function PricePanel({
                   className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-white/60 transition hover:text-white/80"
                   onClick={() => onCompareTopicChange(null)}
                 >
-                  Clear
+                  {t('clear')}
                 </button>
               ) : null}
             </div>

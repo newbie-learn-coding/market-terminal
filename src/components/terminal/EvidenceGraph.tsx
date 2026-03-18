@@ -7,6 +7,7 @@ import type { ForceGraphMethods, LinkObject, NodeObject } from 'react-force-grap
 import { forceCollide } from 'd3-force-3d';
 import * as d3Force from 'd3-force-3d';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/card';
@@ -90,9 +91,15 @@ function edgeStroke(edge: GraphEdge) {
   return 'rgba(20,184,166,0.28)';
 }
 
-function prettyType(type: NodeType) {
-  if (type === 'entity') return 'actor';
-  return type;
+function prettyType(type: NodeType, t: (k: string) => string) {
+  const map: Record<NodeType, string> = {
+    asset: t('legendAsset'),
+    event: t('legendEvent'),
+    entity: t('legendActors'),
+    media: t('legendMedia'),
+    source: t('legendSource'),
+  };
+  return map[type] || type;
 }
 
 function roundedRectPath(
@@ -132,6 +139,7 @@ export function EvidenceGraph({
   viewportClassName?: string;
   fitSignal?: number;
 }) {
+  const t = useTranslations('workspace');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const graphRef = useRef<ForceGraphMethods<GraphNode, GraphEdge> | undefined>(undefined);
   const [size, setSize] = useState({ w: 980, h: 470 });
@@ -416,38 +424,38 @@ export function EvidenceGraph({
             onSelectNode(null);
             onSelectEdge(null);
           }}
-          nodeLabel={(n) => `${n.label} (${prettyType(n.type)})`}
-          linkLabel={(l) => `${l.type.replace(/_/g, ' ')} • ${Math.round(l.confidence * 100)}%`}
+          nodeLabel={(n) => `${n.label} (${prettyType(n.type, t)})`}
+          linkLabel={(l) => `${l.type.replace(/_/g, ' ')} · ${Math.round(l.confidence * 100)}%`}
         />
 
         <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-[#070b14]/70 px-3 py-1 text-[11px] text-white/65 backdrop-blur">
           {(
             [
-              { type: 'asset' as const, label: 'asset', tone: 'bg-[rgba(0,102,255,0.18)] text-white/80' },
-              { type: 'event' as const, label: 'event', tone: 'bg-[rgba(255,82,28,0.16)] text-white/80' },
-              { type: 'entity' as const, label: 'actors', tone: 'bg-[rgba(20,184,166,0.14)] text-white/80' },
-              { type: 'media' as const, label: 'media', tone: 'bg-[rgba(255,188,92,0.18)] text-white/80' },
-              { type: 'source' as const, label: 'source', tone: 'bg-white/[0.06] text-white/75' },
+              { type: 'asset' as const, label: t('legendAsset'), tone: 'bg-[rgba(0,102,255,0.18)] text-white/80' },
+              { type: 'event' as const, label: t('legendEvent'), tone: 'bg-[rgba(255,82,28,0.16)] text-white/80' },
+              { type: 'entity' as const, label: t('legendActors'), tone: 'bg-[rgba(20,184,166,0.14)] text-white/80' },
+              { type: 'media' as const, label: t('legendMedia'), tone: 'bg-[rgba(255,188,92,0.18)] text-white/80' },
+              { type: 'source' as const, label: t('legendSource'), tone: 'bg-white/[0.06] text-white/75' },
             ] as const
-          ).map((t) => {
-            const on = Boolean(typeVisible[t.type]);
+          ).map((item) => {
+            const on = Boolean(typeVisible[item.type]);
             return (
               <button
-                key={t.type}
+                key={item.type}
                 type="button"
                 className={cn(
                   'rounded-full px-2 py-0.5 transition',
-                  t.tone,
+                  item.tone,
                   on ? 'opacity-100' : 'opacity-35 line-through',
                   'hover:opacity-95',
                 )}
                 onClick={() => {
-                  setTypeVisible((prev) => ({ ...prev, [t.type]: !prev[t.type] }));
+                  setTypeVisible((prev) => ({ ...prev, [item.type]: !prev[item.type] }));
                   window.setTimeout(() => graphRef.current?.zoomToFit(420, 64), 0);
                 }}
-                title={on ? `Hide ${t.label}` : `Show ${t.label}`}
+                title={on ? t('hideLabel', { label: item.label }) : t('showLabel', { label: item.label })}
               >
-                {t.label}
+                {item.label}
               </button>
             );
           })}
@@ -458,7 +466,7 @@ export function EvidenceGraph({
             variant="ghost"
             size="icon"
             onClick={zoomIn}
-            aria-label="Zoom in"
+            aria-label={t('zoomIn')}
             className="h-9 w-9 border border-white/10 bg-[#070b14]/60 hover:bg-white/10"
           >
             <ZoomIn className="h-4 w-4" />
@@ -467,7 +475,7 @@ export function EvidenceGraph({
             variant="ghost"
             size="icon"
             onClick={zoomOut}
-            aria-label="Zoom out"
+            aria-label={t('zoomOut')}
             className="h-9 w-9 border border-white/10 bg-[#070b14]/60 hover:bg-white/10"
           >
             <ZoomOut className="h-4 w-4" />
@@ -476,7 +484,7 @@ export function EvidenceGraph({
             variant="ghost"
             size="icon"
             onClick={fit}
-            aria-label="Fit graph"
+            aria-label={t('fitGraph')}
             className="h-9 w-9 border border-white/10 bg-[#070b14]/60 hover:bg-white/10"
           >
             <Maximize2 className="h-4 w-4" />
@@ -485,7 +493,7 @@ export function EvidenceGraph({
             variant="ghost"
             size="icon"
             onClick={centerSelection}
-            aria-label="Center selection"
+            aria-label={t('centerSelection')}
             className="h-9 w-9 border border-white/10 bg-[#070b14]/60 hover:bg-white/10"
             disabled={!selected.nodeId}
           >
@@ -494,7 +502,7 @@ export function EvidenceGraph({
         </div>
 
         <div className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-2 rounded-full border border-white/10 bg-[#070b14]/65 px-3 py-1 text-[11px] text-white/60 backdrop-blur">
-          Scroll to zoom. Drag to pan. Click nodes/links to inspect evidence.
+          {t('graphHelp')}
         </div>
       </div>
     </Card>

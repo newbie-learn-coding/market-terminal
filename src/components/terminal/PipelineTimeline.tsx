@@ -3,6 +3,7 @@
 import { AlertTriangle, Globe, LayoutDashboard, Layers, Link2, ListTree, MinusCircle, Search, Sparkles, TextQuote } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -112,17 +113,18 @@ export function PipelineTimeline({
   minimal?: boolean;
   className?: string;
 }) {
+  const t = useTranslations('workspace');
   const activeKey = stageKeyForStep(step);
   const activeIdx = activeKey ? stageIndex(activeKey) : -1;
 
   const baseStages: Array<{ key: StageKey; label: string; icon: LucideIcon }> = [
-    { key: 'plan', label: 'Plan', icon: Sparkles },
-    { key: 'search', label: 'Search', icon: Search },
-    { key: 'scrape', label: 'Scrape', icon: Globe },
-    { key: 'extract', label: 'Extract', icon: TextQuote },
-    { key: 'link', label: 'Link', icon: Link2 },
-    { key: 'cluster', label: 'Cluster', icon: Layers },
-    { key: 'render', label: 'Render', icon: LayoutDashboard },
+    { key: 'plan', label: t('pipelinePlan'), icon: Sparkles },
+    { key: 'search', label: t('pipelineSearch'), icon: Search },
+    { key: 'scrape', label: t('pipelineScrape'), icon: Globe },
+    { key: 'extract', label: t('pipelineExtract'), icon: TextQuote },
+    { key: 'link', label: t('pipelineLink'), icon: Link2 },
+    { key: 'cluster', label: t('pipelineCluster'), icon: Layers },
+    { key: 'render', label: t('pipelineRender'), icon: LayoutDashboard },
   ];
 
   const stages = baseStages.map((s) => {
@@ -148,15 +150,15 @@ export function PipelineTimeline({
     if (step === 'idle') {
       return (
         <div className="text-xs text-white/45">
-          Ask a topic. The terminal will plan queries, pull sources with Bright Data, then map and cluster the story.
+          {t('pipelineHint')}
         </div>
       );
     }
 
     if (step === 'plan') {
       const q = plan?.queries?.length || 0;
-      const modeLabel = mode === 'deep' ? 'Deep' : 'Fast';
-      const aiLabel = plan?.usedAI ? 'AI planned' : 'Fallback planned';
+      const modeLabel = mode === 'deep' ? t('deep') : t('fast');
+      const aiLabel = plan?.usedAI ? t('aiPlanned') : t('fallbackPlanned');
       return (
         <div className="flex flex-col gap-1">
           <div className="text-xs text-white/55">
@@ -166,7 +168,7 @@ export function PipelineTimeline({
             <span className="text-white/35"> · </span>
             <span className="text-white/55">{aiLabel}</span>
             <span className="text-white/35"> · </span>
-            <span className="text-white/55">{q ? `${q} queries` : 'planning queries'}</span>
+            <span className="text-white/55">{q ? t('queriesCount', { count: q }) : t('planningQueries')}</span>
           </div>
           {plan?.queries?.length ? (
             <div className="flex flex-wrap gap-2">
@@ -190,15 +192,15 @@ export function PipelineTimeline({
       return (
         <div className="flex flex-col gap-1">
           <div className="text-xs text-white/55">
-            <span className="font-semibold text-white/75">Search</span>
+            <span className="font-semibold text-white/75">{t('pipelineSearch')}</span>
             <span className="text-white/35"> · </span>
-            <span className="text-white/55">{search?.queries?.length ? `${search.queries.length} queries` : 'running'}</span>
+            <span className="text-white/55">{search?.queries?.length ? t('queriesCount', { count: search.queries.length }) : t('runningStatus')}</span>
             <span className="text-white/35"> · </span>
-            <span className="text-white/55">{results.length ? `${results.length} results` : 'collecting'}</span>
+            <span className="text-white/55">{results.length ? t('resultsCount', { count: results.length }) : t('collecting')}</span>
             {warningsCount ? (
               <>
                 <span className="text-white/35"> · </span>
-                <span className="text-[rgba(255,170,90,0.95)]">{warningsCount} warn</span>
+                <span className="text-[rgba(255,170,90,0.95)]">{t('warnCount', { count: warningsCount })}</span>
               </>
             ) : null}
           </div>
@@ -220,11 +222,11 @@ export function PipelineTimeline({
       return (
         <div className="flex flex-col gap-1">
           <div className="text-xs text-white/55">
-            <span className="font-semibold text-white/75">Evidence</span>
+            <span className="font-semibold text-white/75">{t('evidenceLabel')}</span>
             <span className="text-white/35"> · </span>
-            <span className="text-white/55">{compactCount(evidenceCount)} items</span>
+            <span className="text-white/55">{t('itemsCount', { count: compactCount(evidenceCount) })}</span>
             <span className="text-white/35"> · </span>
-            <span className="text-white/55">{compactCount(top.length)} sources</span>
+            <span className="text-white/55">{t('sourcesN', { count: compactCount(top.length) })}</span>
           </div>
           {top.length ? (
             <div className="flex flex-wrap gap-2 text-[11px] text-white/55">
@@ -242,13 +244,13 @@ export function PipelineTimeline({
     if (step === 'link') {
       return (
         <div className="text-xs text-white/55">
-          <span className="font-semibold text-white/75">Map</span>
+          <span className="font-semibold text-white/75">{t('mapLabel')}</span>
           <span className="text-white/35"> · </span>
-          <span className="text-white/55">{compactCount(nodesCount)} nodes</span>
+          <span className="text-white/55">{t('nodesCount', { count: compactCount(nodesCount) })}</span>
           <span className="text-white/35"> · </span>
-          <span className="text-white/55">{compactCount(edgesCount)} edges</span>
+          <span className="text-white/55">{t('edgesCount', { count: compactCount(edgesCount) })}</span>
           <span className="text-white/35"> · </span>
-          <span className="text-white/55">click nodes to inspect sources</span>
+          <span className="text-white/55">{t('clickToInspect')}</span>
         </div>
       );
     }
@@ -256,9 +258,9 @@ export function PipelineTimeline({
     if (step === 'cluster') {
       return (
         <div className="text-xs text-white/55">
-          <span className="font-semibold text-white/75">Narratives</span>
+          <span className="font-semibold text-white/75">{t('narrativesLabel')}</span>
           <span className="text-white/35"> · </span>
-          <span className="text-white/55">{compactCount(clustersCount)} clusters</span>
+          <span className="text-white/55">{t('clustersCount', { count: compactCount(clustersCount) })}</span>
         </div>
       );
     }
@@ -266,9 +268,9 @@ export function PipelineTimeline({
     // render / ready
     return (
       <div className="text-xs text-white/55">
-        <span className="font-semibold text-white/75">Panels updated</span>
+        <span className="font-semibold text-white/75">{t('panelsUpdated')}</span>
         <span className="text-white/35"> · </span>
-        <span className="text-white/55">tape, map, narratives, price context, videos</span>
+        <span className="text-white/55">{t('panelsUpdatedDesc')}</span>
       </div>
     );
   })();
@@ -298,7 +300,7 @@ export function PipelineTimeline({
                   s.status === 'active' && 'shadow-[0_0_0_4px_rgba(255,255,255,0.03)]',
                   s.status === 'skipped' && 'border-dashed opacity-60',
                 )}
-                title={s.status === 'skipped' ? 'Skipped in fast mode' : s.label}
+                title={s.status === 'skipped' ? t('skippedFastMode') : s.label}
               >
                 {s.status === 'skipped' ? (
                   <MinusCircle className="h-3.5 w-3.5 opacity-70" />
@@ -318,10 +320,10 @@ export function PipelineTimeline({
               size="sm"
               onClick={onOpenTrace}
               className="h-auto gap-2 rounded-full px-3 py-1 text-[11px] font-semibold"
-              title="Open run trace"
+              title={t('openRunTrace')}
             >
               <ListTree className="h-4 w-4 opacity-80" />
-              Trace
+              {t('trace')}
             </Button>
           ) : null}
           <span className="mono">{Math.round(progress * 100)}%</span>
@@ -334,7 +336,7 @@ export function PipelineTimeline({
           {warningsCount ? (
             <div className="hidden shrink-0 items-center gap-2 rounded-full border border-white/10 bg-[rgba(255,170,90,0.08)] px-3 py-1 text-[11px] text-[rgba(255,200,140,0.95)] sm:flex">
               <AlertTriangle className="h-3.5 w-3.5 opacity-90" />
-              <span>{warningsCount} warnings</span>
+              <span>{t('warningsCount', { count: warningsCount })}</span>
             </div>
           ) : null}
         </div>

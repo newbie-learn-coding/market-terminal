@@ -1,6 +1,7 @@
 'use client';
 
 import { RefreshCw, Video } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -64,14 +65,15 @@ export function MediaPanel({
   onRefresh: () => void;
   onActiveVideoChange: (id: string) => void;
 }) {
+  const t = useTranslations('workspace');
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3 border-b border-white/[0.08]">
         <div className="flex items-center gap-2">
           <Video className="h-4 w-4 text-white/80" />
           <div>
-            <CardTitle>Media</CardTitle>
-            <CardDescription>{videoAutoPoll ? 'Auto-polling every 5m' : 'Manual refresh'}</CardDescription>
+            <CardTitle>{t('mediaTitle')}</CardTitle>
+            <CardDescription>{videoAutoPoll ? t('mediaAutoDesc') : t('mediaManualDesc')}</CardDescription>
           </div>
         </div>
         {session ? (
@@ -85,7 +87,7 @@ export function MediaPanel({
                 )}
                 onClick={() => onVideoAutoPollChange(false)}
               >
-                Manual
+                {t('manual')}
               </button>
               <button
                 type="button"
@@ -95,7 +97,7 @@ export function MediaPanel({
                 )}
                 onClick={() => onVideoAutoPollChange(true)}
               >
-                Auto
+                {t('auto')}
               </button>
             </div>
             <Button
@@ -106,7 +108,7 @@ export function MediaPanel({
               disabled={videosLoading}
             >
               <RefreshCw className={cn('h-4 w-4', videosLoading ? 'animate-spin' : '')} />
-              Refresh
+              {t('refresh')}
             </Button>
           </div>
         ) : null}
@@ -114,7 +116,7 @@ export function MediaPanel({
       <CardContent className="p-5">
         {!session ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/60">
-            Run a topic to load videos.
+            {t('runTopicForMedia')}
           </div>
         ) : !videos ? (
           videosLoading ? (
@@ -124,12 +126,12 @@ export function MediaPanel({
             </div>
           ) : (
             <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/60">
-              No videos loaded yet.
+              {t('noVideosLoaded')}
             </div>
           )
         ) : videos.items.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/60">
-            No videos found for this topic.
+            {t('noVideosFound')}
           </div>
         ) : (
           <div className="space-y-3">
@@ -173,7 +175,7 @@ export function MediaPanel({
                     />
                   ) : (
                     <div className="grid h-16 w-28 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(135deg,rgba(0,102,255,0.24),rgba(255,82,28,0.18),rgba(20,184,166,0.14))]">
-                      <div className="mono text-xs font-semibold text-white/85">VIDEO</div>
+                      <div className="mono text-xs font-semibold text-white/85">{t('video')}</div>
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
@@ -187,7 +189,7 @@ export function MediaPanel({
                         onClick={(e) => e.stopPropagation()}
                         className="text-[11px] text-[rgba(153,197,255,0.9)] underline underline-offset-4"
                       >
-                        Open source
+                        {t('openSource')}
                       </a>
                     </div>
                   </div>

@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { ArrowRight, ChevronDown, ChevronRight, CircleDot, GitBranch, Globe, Layers, Sparkles } from 'lucide-react';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/card';
@@ -48,6 +49,7 @@ export function EvidenceMindMap({
   className?: string;
   viewportClassName?: string;
 }) {
+  const t = useTranslations('workspace');
   const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
 
   const data = useMemo(() => {
@@ -262,7 +264,7 @@ export function EvidenceMindMap({
       >
         <div className="flex items-center justify-between gap-3">
           <div className={cn('truncate font-semibold', tone.text)}>{node.label}</div>
-          <div className="mono text-[11px] text-white/45">links {linkCount}</div>
+          <div className="mono text-[11px] text-white/45">{t('linksCount', { count: linkCount })}</div>
         </div>
       </button>
     );
@@ -311,16 +313,16 @@ export function EvidenceMindMap({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Badge tone="teal" className="mono">
-                MIND MAP
+                {t('mindMapBadge')}
               </Badge>
-              <div className="text-xs text-white/55">Story-first view: catalysts, channels, and impact from the graph.</div>
+              <div className="text-xs text-white/55">{t('mindMapDesc')}</div>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-white/55">
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                nodes <span className="mono text-white/75">{nodes.length}</span>
+                {t('nodes')} <span className="mono text-white/75">{nodes.length}</span>
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
-                edges <span className="mono text-white/75">{edges.length}</span>
+                {t('edges')} <span className="mono text-white/75">{edges.length}</span>
               </span>
             </div>
           </div>
@@ -328,7 +330,7 @@ export function EvidenceMindMap({
           <div className="mt-4">
             <div className="mx-auto max-w-[980px] rounded-3xl border border-white/10 bg-white/[0.02] p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-xs font-semibold tracking-[0.18em] text-white/50">FOCUS ASSET</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">{t('focusAsset')}</div>
                 <div className="text-[11px] text-white/45 mono">{topic}</div>
               </div>
 
@@ -352,7 +354,7 @@ export function EvidenceMindMap({
                     {root.label}
                   </button>
                 ) : (
-                  <div className="text-sm text-white/60">No nodes yet.</div>
+                  <div className="text-sm text-white/60">{t('noNodesYet')}</div>
                 )}
               </div>
 
@@ -360,7 +362,7 @@ export function EvidenceMindMap({
                 <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
                   <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.16em] text-white/55">
                     <GitBranch className="h-3.5 w-3.5" />
-                    CATALYSTS
+                    {t('catalysts')}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {data.branch.events.slice(0, 6).length ? (
@@ -388,7 +390,7 @@ export function EvidenceMindMap({
                         );
                       })
                     ) : (
-                      <div className="text-sm text-white/55">No events yet.</div>
+                      <div className="text-sm text-white/55">{t('noEventsYet')}</div>
                     )}
                   </div>
                 </div>
@@ -396,7 +398,7 @@ export function EvidenceMindMap({
                 <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
                   <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.16em] text-white/55">
                     <Layers className="h-3.5 w-3.5" />
-                    CHANNELS
+                    {t('channelsLabel')}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {data.channelOrder.length ? (
@@ -425,7 +427,7 @@ export function EvidenceMindMap({
                         );
                       })
                     ) : (
-                      <div className="text-sm text-white/55">No channel edges yet.</div>
+                      <div className="text-sm text-white/55">{t('noChannelEdgesYet')}</div>
                     )}
                   </div>
                 </div>
@@ -433,7 +435,7 @@ export function EvidenceMindMap({
                 <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
                   <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.16em] text-white/55">
                     <Sparkles className="h-3.5 w-3.5" />
-                    IMPACT
+                    {t('impactLabel')}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {data.impactHighlights.length ? (
@@ -461,7 +463,7 @@ export function EvidenceMindMap({
                         );
                       })
                     ) : (
-                      <div className="text-sm text-white/55">No impact nodes yet.</div>
+                      <div className="text-sm text-white/55">{t('noImpactNodesYet')}</div>
                     )}
                   </div>
                 </div>
@@ -469,38 +471,38 @@ export function EvidenceMindMap({
 
               <div className="mt-4 grid gap-3 lg:grid-cols-5">
                 <BranchCard
-                  title="Events"
+                  title={t('events')}
                   icon={<GitBranch className="h-4 w-4" />}
                   items={data.branch.events}
-                  emptyHint="No event nodes linked yet."
+                  emptyHint={t('noEventNodes')}
                   itemType="event"
                 />
                 <BranchCard
-                  title="Actors"
+                  title={t('actors')}
                   icon={<CircleDot className="h-4 w-4" />}
                   items={data.branch.actors}
-                  emptyHint="No actor nodes linked yet."
+                  emptyHint={t('noActorNodes')}
                   itemType="entity"
                 />
                 <BranchCard
-                  title="Sources"
+                  title={t('sources')}
                   icon={<Globe className="h-4 w-4" />}
                   items={data.branch.sources}
-                  emptyHint="No sources linked yet."
+                  emptyHint={t('noSourcesLinked')}
                   itemType="source"
                 />
                 <BranchCard
-                  title="Spillovers"
+                  title={t('spillovers')}
                   icon={<Sparkles className="h-4 w-4" />}
                   items={data.branch.spillovers}
-                  emptyHint="No spillover assets detected."
+                  emptyHint={t('noSpilloverAssets')}
                   itemType="asset"
                 />
                 <BranchCard
-                  title="Media"
+                  title={t('media')}
                   icon={<Globe className="h-4 w-4" />}
                   items={data.branch.media}
-                  emptyHint="No media nodes linked yet."
+                  emptyHint={t('noMediaNodes')}
                   itemType="media"
                 />
               </div>
@@ -510,9 +512,9 @@ export function EvidenceMindMap({
           {data.threads.length ? (
             <div className="mx-auto mt-4 max-w-[980px]">
               <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="text-xs font-semibold tracking-[0.18em] text-white/50">NARRATIVE THREADS</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">{t('narrativeThreads')}</div>
                 <div className="text-[11px] text-white/45">
-                  Source <ArrowRight className="inline h-3 w-3" /> Event <ArrowRight className="inline h-3 w-3" /> Impact
+                  {t('breadcrumbSource')} <ArrowRight className="inline h-3 w-3" /> {t('breadcrumbEvent')} <ArrowRight className="inline h-3 w-3" /> {t('breadcrumbImpact')}
                 </div>
               </div>
               <div className="space-y-2">
@@ -544,7 +546,7 @@ export function EvidenceMindMap({
                           <div className="flex items-center justify-between gap-3">
                             <div className={cn('font-semibold', toneForNode('event').text)}>{ev.label}</div>
                             <div className="mono text-[11px] text-white/45">
-                              conf {formatPct(thread.confidence)} · ev {thread.evidenceCount}
+                              {t('confLabel')} {formatPct(thread.confidence)} · {t('evLabel')} {thread.evidenceCount}
                             </div>
                           </div>
                         </button>
@@ -552,7 +554,7 @@ export function EvidenceMindMap({
                           type="button"
                           className="h-10 w-10 rounded-xl border border-white/10 bg-white/[0.03] text-white/60 transition hover:bg-white/[0.06]"
                           onClick={() => setExpandedEvents((p) => ({ ...p, [evId]: !p[evId] }))}
-                          aria-label={open ? 'Collapse event' : 'Expand event'}
+                          aria-label={open ? t('collapseEvent') : t('expandEvent')}
                         >
                           {open ? <ChevronDown className="mx-auto h-4 w-4" /> : <ChevronRight className="mx-auto h-4 w-4" />}
                         </button>
@@ -572,9 +574,9 @@ export function EvidenceMindMap({
                               onSelectEdge(null);
                             }}
                             disabled={!thread.sourceId}
-                            title={sourceNode?.label || 'No source link'}
+                            title={sourceNode?.label || t('noSourceLink')}
                           >
-                            {sourceNode?.label || 'No source'}
+                            {sourceNode?.label || t('noSource')}
                           </button>
                           <ArrowRight className="h-3.5 w-3.5 text-white/45" />
                           <button
@@ -606,9 +608,9 @@ export function EvidenceMindMap({
                               onSelectEdge(null);
                             }}
                             disabled={!thread.impactId}
-                            title={impactNode?.label || 'No impact link'}
+                            title={impactNode?.label || t('noImpactLink')}
                           >
-                            {impactNode?.label || 'No impact'}
+                            {impactNode?.label || t('noImpact')}
                           </button>
                         </div>
                       </div>
@@ -645,27 +647,27 @@ export function EvidenceMindMap({
                       {open ? (
                         <div className="mt-3 grid gap-3 lg:grid-cols-4">
                           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
-                            <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">SOURCES</div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{t('sources')}</div>
                             <div className="mt-2 space-y-2">
-                              {kids?.sources.length ? kids.sources.map((id) => renderNodeChip(id, 'source')) : <div className="text-sm text-white/60">None</div>}
+                              {kids?.sources.length ? kids.sources.map((id) => renderNodeChip(id, 'source')) : <div className="text-sm text-white/60">{t('none')}</div>}
                             </div>
                           </div>
                           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
-                            <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">ACTORS</div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{t('actors')}</div>
                             <div className="mt-2 space-y-2">
-                              {kids?.actors.length ? kids.actors.map((id) => renderNodeChip(id, 'entity')) : <div className="text-sm text-white/60">None</div>}
+                              {kids?.actors.length ? kids.actors.map((id) => renderNodeChip(id, 'entity')) : <div className="text-sm text-white/60">{t('none')}</div>}
                             </div>
                           </div>
                           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
-                            <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">ASSETS</div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{t('assets')}</div>
                             <div className="mt-2 space-y-2">
-                              {kids?.assets.length ? kids.assets.map((id) => renderNodeChip(id, 'asset')) : <div className="text-sm text-white/60">None</div>}
+                              {kids?.assets.length ? kids.assets.map((id) => renderNodeChip(id, 'asset')) : <div className="text-sm text-white/60">{t('none')}</div>}
                             </div>
                           </div>
                           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
-                            <div className="text-[11px] font-semibold tracking-[0.18em] text-white/45">MEDIA</div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{t('media')}</div>
                             <div className="mt-2 space-y-2">
-                              {kids?.media.length ? kids.media.map((id) => renderNodeChip(id, 'media')) : <div className="text-sm text-white/60">None</div>}
+                              {kids?.media.length ? kids.media.map((id) => renderNodeChip(id, 'media')) : <div className="text-sm text-white/60">{t('none')}</div>}
                             </div>
                           </div>
                         </div>
