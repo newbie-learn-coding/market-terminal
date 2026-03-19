@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS market_signal.sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_slug ON market_signal.sessions(slug) WHERE slug IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_sessions_asset ON market_signal.sessions(asset_key, status);
+CREATE INDEX IF NOT EXISTS idx_sessions_created_session ON market_signal.sessions(created_at DESC, session_id DESC);
+CREATE INDEX IF NOT EXISTS idx_sessions_status_created_session ON market_signal.sessions(status, created_at DESC, session_id DESC);
 
 CREATE TABLE IF NOT EXISTS market_signal.session_events (
   id          BIGSERIAL PRIMARY KEY,
@@ -30,3 +32,4 @@ CREATE TABLE IF NOT EXISTS market_signal.session_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_session ON market_signal.session_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_events_session_id ON market_signal.session_events(session_id, id ASC);

@@ -1,52 +1,28 @@
 import { NextResponse } from 'next/server';
 
 import { brightDataSerpZone, env, hasBrightData, hasDb } from '@/lib/env';
-import { createAIClient, getAIConfig } from '@/lib/ai';
-import { brightDataSerpGoogle } from '@/lib/brightdata';
-import { probeDb } from '@/lib/db';
+import { createChatCompletion, getAIConfig } from '@/lib/ai';
+import { brightDataSerpGoogle, probeBrightDataMarkdown } from '@/lib/brightdata';
+import { probeDb, probeDbSchema } from '@/lib/db';
 import { createLogger, maskSecret } from '@/lib/log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+type ProbeStatus = {
+  ok: boolean;
+  [key: string]: unknown;
+};
+
 async function probeBrightData() {
   const token = env.brightdata.token;
   if (!token) return { ok: false, error: 'missing-token' as const };
-
-  const startedAt = Date.now();
-  const zone = env.brightdata.zone;
-  const resp = await fetch('https://api.brightdata.com/request', {
-    method: 'POST',
-    cache: 'no-store',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${token}`,
-      'user-agent': 'market-terminal/health',
-    },
-    body: JSON.stringify({
-      url: 'https://example.com/',
-      zone,
-      format: 'raw',
-      data_format: 'markdown',
-    }),
-  });
-
-  const text = await resp.text();
-  const latencyMs = Date.now() - startedAt;
-  if (!resp.ok) {
-    return {
-      ok: false,
-      latencyMs,
-      status: resp.status,
-      error: text.slice(0, 240),
-    };
+  try {
+    return await probeBrightDataMarkdown();
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: message.slice(0, 240) };
   }
-
-  return {
-    ok: true,
-    latencyMs,
-    bytes: text.length,
-  };
 }
 
 async function probeBrightDataSerp() {
@@ -79,18 +55,16 @@ async function probeAI() {
   if (!cfg) return { ok: false, error: 'missing-key' as const };
 
   const startedAt = Date.now();
-  const client = createAIClient(cfg);
-  const res = await client.chat.completions.create({
-    model: cfg.model,
+  const res = await createChatCompletion({
+    config: cfg,
+    cacheTtlMs: 0,
     temperature: 0,
-    max_tokens: 24,
-    messages: [
-      { role: 'system', content: 'Return a single word: ok' },
-      { role: 'user', content: 'Health check.' },
-    ],
+    maxTokens: 24,
+    system: 'Return a single word: ok',
+    user: 'Health check.',
   });
   const latencyMs = Date.now() - startedAt;
-  const content = res.choices?.[0]?.message?.content?.trim() || '';
+  const content = res.content.trim();
 
   return {
     ok: Boolean(content),
@@ -99,7 +73,6 @@ async function probeAI() {
     sample: content.slice(0, 40),
   };
 }
-
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -137,11 +110,12 @@ export async function GET(request: Request) {
     return NextResponse.json(base, { status: 200 });
   }
 
-  const [bright, serp, ai, dbProbe] = await Promise.allSettled([
+  const [bright, serp, ai, dbProbe, dbSchemaProbe] = await Promise.allSettled([
     probeBrightData(),
     probeBrightDataSerp(),
     probeAI(),
     probeDb(),
+    probeDbSchema(),
   ]);
 
   const probes = {
@@ -149,13 +123,15 @@ export async function GET(request: Request) {
     brightdataSerp: serp.status === 'fulfilled' ? serp.value : { ok: false, error: String(serp.reason) },
     ai: ai.status === 'fulfilled' ? ai.value : { ok: false, error: String(ai.reason) },
     db: dbProbe.status === 'fulfilled' ? dbProbe.value : { ok: false, error: String(dbProbe.reason) },
+    dbSchema: dbSchemaProbe.status === 'fulfilled' ? dbSchemaProbe.value : { ok: false, error: String(dbSchemaProbe.reason) },
   };
 
   const ok = Boolean(
-    (probes.brightdata as any).ok &&
-      (probes.brightdataSerp as any).ok &&
-      (probes.ai as any).ok &&
-      (probes.db as any).ok,
+    (probes.brightdata as ProbeStatus).ok &&
+      (probes.brightdataSerp as ProbeStatus).ok &&
+      (probes.ai as ProbeStatus).ok &&
+      (probes.db as ProbeStatus).ok &&
+      (probes.dbSchema as ProbeStatus).ok,
   );
 
   log.info('health.probe', { ok, probes, ms: Date.now() - startedAt });

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import LandingClient from '@/components/landing/LandingClient';
 import { listPublished } from '@/lib/db';
+import { firstEvidenceSentiment } from '@/lib/session-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,11 +62,7 @@ export default async function HomePage({
 
       const existing = grouped.get(ak);
       if (!existing) {
-        const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
-        let sentiment: string | null = null;
-        for (const ev of evidence) {
-          if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
-        }
+        const sentiment = firstEvidenceSentiment(s.meta);
         grouped.set(ak, { count: 1, sentiment });
       } else {
         existing.count += 1;

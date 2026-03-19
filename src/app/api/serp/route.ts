@@ -8,6 +8,8 @@ import { createLogger } from '@/lib/log';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+type Recency = 'h' | 'd' | 'w' | 'm' | 'y' | '';
+
 const QuerySchema = z.object({
   q: z.string().min(2),
   format: z.enum(['light', 'full', 'markdown']).optional(),
@@ -43,13 +45,13 @@ export async function GET(request: Request) {
 
   const format = parsed.data.format || 'light';
   const vertical = parsed.data.vertical || 'web';
-  const recency = parsed.data.recency || '';
+  const recency: Recency = parsed.data.recency || '';
   log.info('serp.request', { format, vertical, recency, q: parsed.data.q.slice(0, 120) });
   const results = await brightDataSerpGoogle({
     query: parsed.data.q,
     format: format === 'full' ? 'full_json_google' : format === 'markdown' ? 'markdown' : 'light_json_google',
     vertical,
-    recency: recency as any,
+    recency,
   });
 
   log.info('serp.response', { count: results.length, ms: Date.now() - startedAt });

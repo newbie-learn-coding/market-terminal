@@ -1,10 +1,15 @@
 import { brightDataSerpZone, env } from '@/lib/env';
+import { getOrComputeCached, buildCacheKey } from '@/lib/server-cache';
+import { normalizeProviderError, providerErrorFromStatus } from '@/lib/provider-error';
 
 export type SerpResult = {
   title: string;
   url: string;
   snippet?: string;
 };
+
+const BRIGHTDATA_REQUEST_TTL_MS = 2 * 60_000;
+const BRIGHTDATA_MARKDOWN_TTL_MS = 10 * 60_000;
 
 function sleepMs(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -14,6 +19,8 @@ async function brightDataRequestText(url: string, dataFormat?: string, zoneOverr
   if (!env.brightdata.token) throw new Error('Bright Data token not configured');
 
   const zone = zoneOverride || env.brightdata.zone;
+  const ttlMs = dataFormat === 'markdown' ? BRIGHTDATA_MARKDOWN_TTL_MS : BRIGHTDATA_REQUEST_TTL_MS;
+  const cacheKey = buildCacheKey(['brightdata', zone, dataFormat || 'raw', url]);
   const body = JSON.stringify({
     url,
     zone,
@@ -21,50 +28,68 @@ async function brightDataRequestText(url: string, dataFormat?: string, zoneOverr
     ...(dataFormat ? { data_format: dataFormat } : null),
   });
 
-  const maxAttempts = 3;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    let resp: Response;
-    let text = '';
-    try {
-      resp = await fetch('https://api.brightdata.com/request', {
-        method: 'POST',
-        cache: 'no-store',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${env.brightdata.token}`,
-          'user-agent': 'market-terminal/request',
-        },
-        body,
-      });
-      text = await resp.text();
-    } catch (e) {
-      if (attempt < maxAttempts) {
-        await sleepMs(250 * attempt + Math.random() * 220);
-        continue;
+  return getOrComputeCached({
+    key: cacheKey,
+    ttlMs,
+    loader: async () => {
+      const maxAttempts = 3;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        let resp: Response;
+        let text = '';
+        try {
+          resp = await fetch('https://api.brightdata.com/request', {
+            method: 'POST',
+            cache: 'no-store',
+            headers: {
+              'content-type': 'application/json',
+              authorization: `Bearer ${env.brightdata.token}`,
+              'user-agent': 'market-terminal/request',
+            },
+            body,
+          });
+          text = await resp.text();
+        } catch (e) {
+          const err = normalizeProviderError('brightdata', e, 'Bright Data request failed');
+          if (err.retryable && attempt < maxAttempts) {
+            await sleepMs(250 * attempt + Math.random() * 220);
+            continue;
+          }
+          throw err;
+        }
+
+        if (resp.ok) return text;
+
+        const snippet = text.length > 900 ? `${text.slice(0, 900)}...` : text;
+        const err = providerErrorFromStatus(
+          'brightdata',
+          resp.status,
+          `Bright Data request failed (${resp.status}) zone=${zone} data_format=${dataFormat || 'none'}: ${snippet}`,
+        );
+        if (err.retryable && attempt < maxAttempts) {
+          await sleepMs(320 * attempt * attempt + Math.random() * 260);
+          continue;
+        }
+
+        throw err;
       }
-      throw e;
-    }
 
-    if (resp.ok) return text;
-
-    const snippet = text.length > 900 ? `${text.slice(0, 900)}...` : text;
-    const retryable = resp.status === 429 || resp.status === 408 || (resp.status >= 500 && resp.status <= 599);
-    if (retryable && attempt < maxAttempts) {
-      await sleepMs(320 * attempt * attempt + Math.random() * 260);
-      continue;
-    }
-
-    // Include zone + data_format in the error to make misconfigurations obvious.
-    throw new Error(
-      `Bright Data request failed (${resp.status}) zone=${zone} data_format=${dataFormat || 'none'}: ${snippet}`,
-    );
-  }
-
-  throw new Error('Bright Data request failed (unknown)');
+      throw normalizeProviderError('brightdata', null, 'Bright Data request failed (unknown)');
+    },
+  });
 }
 
 export async function brightDataRequestMarkdown(url: string) {
   return brightDataRequestText(url, 'markdown');
+}
+
+export async function probeBrightDataMarkdown(url = 'https://example.com/') {
+  const startedAt = Date.now();
+  const text = await brightDataRequestText(url, 'markdown');
+  return {
+    ok: true,
+    latencyMs: Date.now() - startedAt,
+    bytes: text.length,
+  };
 }
 
 export function parseSerpMarkdown(md: string): SerpResult[] {
@@ -130,10 +155,21 @@ function asResults(items: Array<{ title?: unknown; url?: unknown; link?: unknown
   return out;
 }
 
-function parseSerpJson(raw: unknown): SerpResult[] {
+type GenericResult = {
+  title?: unknown;
+  url?: unknown;
+  link?: unknown;
+  href?: unknown;
+  name?: unknown;
+  snippet?: unknown;
+  description?: unknown;
+  summary?: unknown;
+};
+
+export function parseSerpJson(raw: unknown): SerpResult[] {
   // We support multiple shapes defensively because Bright Data formats differ.
   if (!raw || typeof raw !== 'object') return [];
-  const obj = raw as any;
+  const obj = raw as Record<string, unknown>;
 
   const fallbackDeepExtract = () => {
     // Last-resort: walk any object shape and collect anything that looks like a result.
@@ -165,7 +201,7 @@ function parseSerpJson(raw: unknown): SerpResult[] {
       }
 
       if (typeof cur !== 'object') continue;
-      const o = cur as any;
+      const o = cur as GenericResult & Record<string, unknown>;
 
       const url = o?.url || o?.link || o?.href;
       const title = o?.title || o?.name;
@@ -194,14 +230,15 @@ function parseSerpJson(raw: unknown): SerpResult[] {
 
   // Sometimes: { results: { organic: [...] } }
   if (obj.results && typeof obj.results === 'object') {
-    if (Array.isArray(obj.results.organic)) return asResults(obj.results.organic);
-    if (Array.isArray(obj.results.organic_results)) return asResults(obj.results.organic_results);
-    if (Array.isArray(obj.results.news_results)) return asResults(obj.results.news_results);
-    if (Array.isArray(obj.results.top_stories)) return asResults(obj.results.top_stories);
+    const resultsObj = obj.results as Record<string, unknown>;
+    if (Array.isArray(resultsObj.organic)) return asResults(resultsObj.organic as GenericResult[]);
+    if (Array.isArray(resultsObj.organic_results)) return asResults(resultsObj.organic_results as GenericResult[]);
+    if (Array.isArray(resultsObj.news_results)) return asResults(resultsObj.news_results as GenericResult[]);
+    if (Array.isArray(resultsObj.top_stories)) return asResults(resultsObj.top_stories as GenericResult[]);
   }
 
   // Sometimes: array of result objects
-  if (Array.isArray(raw)) return asResults(raw as any[]);
+  if (Array.isArray(raw)) return asResults(raw as GenericResult[]);
 
   return fallbackDeepExtract();
 }

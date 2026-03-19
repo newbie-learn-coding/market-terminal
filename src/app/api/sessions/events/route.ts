@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { hasDb, getSession, listEvents } from '@/lib/db';
+import { hasDb, getSession, listEventsPage } from '@/lib/db';
 import { createLogger } from '@/lib/log';
 
 export const runtime = 'nodejs';
@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 const QuerySchema = z.object({
   sessionId: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(800).optional().default(250),
+  cursor: z.string().optional(),
 });
 
 export async function GET(request: Request) {
@@ -21,6 +22,7 @@ export async function GET(request: Request) {
   const parsed = QuerySchema.safeParse({
     sessionId: url.searchParams.get('sessionId') || url.searchParams.get('id') || '',
     limit: url.searchParams.get('limit') || undefined,
+    cursor: url.searchParams.get('cursor') || undefined,
   });
 
   if (!parsed.success) {
@@ -33,7 +35,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Database not configured' }, { status: 400 });
   }
 
-  const { sessionId, limit } = parsed.data;
+  const { sessionId, limit, cursor } = parsed.data;
 
   const session = await getSession(sessionId);
   if (!session) {
@@ -41,15 +43,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
-  let events: any[];
+  let page: Awaited<ReturnType<typeof listEventsPage>>;
   try {
-    events = await listEvents(sessionId, limit);
-  } catch (e: any) {
-    log.error('sessions.events.events_fetch_failed', { sessionId, error: e?.message, ms: Date.now() - startedAt });
-    return NextResponse.json({ error: e?.message || 'fetch failed' }, { status: 500 });
+    page = await listEventsPage({ sessionId, limit, cursor });
+  } catch (e) {
+    const error = e instanceof Error ? e.message : 'fetch failed';
+    log.error('sessions.events.events_fetch_failed', { sessionId, error, ms: Date.now() - startedAt });
+    return NextResponse.json({ error }, { status: 500 });
   }
 
-  log.info('sessions.events.ok', { sessionId, events: events.length, ms: Date.now() - startedAt });
+  log.info('sessions.events.ok', { sessionId, events: page.items.length, hasMore: page.hasMore, ms: Date.now() - startedAt });
 
   return NextResponse.json(
     {
@@ -62,9 +65,12 @@ export async function GET(request: Request) {
         progress: session.progress,
         meta: session.meta,
       },
-      events,
+      events: page.items,
+      pageInfo: {
+        nextCursor: page.nextCursor,
+        hasMore: page.hasMore,
+      },
     },
     { status: 200 },
   );
 }
-

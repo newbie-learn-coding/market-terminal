@@ -60,6 +60,10 @@ type SessionDetailResponse = {
     meta: any;
   };
   events: TraceEvent[];
+  pageInfo?: {
+    nextCursor: string | null;
+    hasMore: boolean;
+  };
 };
 
 type PerfApiEntry = {
@@ -259,6 +263,8 @@ export function SessionDashboard() {
   const [tab, setTab] = useState<string>('artifacts');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const detailInFlightRef = useRef(false);
+  const SESSION_PAGE_LIMIT = 80;
+  const EVENT_PAGE_LIMIT = 500;
 
   useEffect(() => {
     if (!copiedKey) return;
@@ -270,12 +276,25 @@ export function SessionDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const qs = new URLSearchParams({ limit: '80' });
-      if (query.trim()) qs.set('q', query.trim());
-      const res = await fetch(apiPath(`/api/sessions?${qs.toString()}`), { cache: 'no-store' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Failed to load sessions');
-      const list = (json?.sessions || []) as SessionSummary[];
+      let cursor: string | null = null;
+      const list: SessionSummary[] = [];
+
+      while (list.length < SESSION_PAGE_LIMIT) {
+        const remaining = SESSION_PAGE_LIMIT - list.length;
+        const qs = new URLSearchParams({ limit: String(Math.min(remaining, 40)) });
+        if (query.trim()) qs.set('q', query.trim());
+        if (cursor) qs.set('cursor', cursor);
+
+        const res = await fetch(apiPath(`/api/sessions?${qs.toString()}`), { cache: 'no-store' });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || 'Failed to load sessions');
+
+        const page = (json?.sessions || []) as SessionSummary[];
+        list.push(...page);
+        cursor = typeof json?.pageInfo?.nextCursor === 'string' ? json.pageInfo.nextCursor : null;
+        if (!json?.pageInfo?.hasMore || !cursor || page.length === 0) break;
+      }
+
       setSessions(list);
       if (!selectedId && list.length) setSelectedId(list[0].id);
     } catch (e) {
@@ -293,11 +312,27 @@ export function SessionDashboard() {
     setDetailLoading(true);
     setDetailError(null);
     try {
-      const qs = new URLSearchParams({ sessionId: id, limit: '500' });
-      const res = await fetch(apiPath(`/api/sessions/events?${qs.toString()}`), { cache: 'no-store' });
-      const json = (await res.json()) as SessionDetailResponse & { error?: string };
-      if (!res.ok) throw new Error(json?.error || 'Failed to load session');
-      setDetail(json);
+      let cursor: string | null = null;
+      let sessionMeta: SessionDetailResponse['session'] | null = null;
+      const events: TraceEvent[] = [];
+
+      while (events.length < EVENT_PAGE_LIMIT) {
+        const remaining = EVENT_PAGE_LIMIT - events.length;
+        const qs = new URLSearchParams({ sessionId: id, limit: String(Math.min(remaining, 200)) });
+        if (cursor) qs.set('cursor', cursor);
+
+        const res = await fetch(apiPath(`/api/sessions/events?${qs.toString()}`), { cache: 'no-store' });
+        const json = (await res.json()) as SessionDetailResponse & { error?: string };
+        if (!res.ok) throw new Error(json?.error || 'Failed to load session');
+
+        sessionMeta = json.session;
+        events.push(...(json.events || []));
+        cursor = typeof json?.pageInfo?.nextCursor === 'string' ? json.pageInfo.nextCursor : null;
+        if (!json?.pageInfo?.hasMore || !cursor || (json.events || []).length === 0) break;
+      }
+
+      if (!sessionMeta) throw new Error('Failed to load session');
+      setDetail({ session: sessionMeta, events });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to load session';
       setDetailError(msg);

@@ -18,8 +18,17 @@ jobs:
 
       - run: npm ci
 
-      - name: Type check & lint
-        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
 
   deploy:
     needs: build-check
@@ -37,9 +46,12 @@ jobs:
           script: |
             set -e
             APP_DIR="/opt/docker-projects/standalone-apps/brightdata/market-signal-terminal"
+            CONTAINER_NAME="market-terminal"
             cd "$APP_DIR"
             git fetch origin main
             git reset --hard origin/main
             docker compose build --no-cache
             docker compose up -d
+            docker exec "$CONTAINER_NAME" node scripts/apply-schema.mjs
+            sh scripts/install-cleanup-cron.sh "$APP_DIR" "$CONTAINER_NAME"
             echo "Deployed at $(date)"

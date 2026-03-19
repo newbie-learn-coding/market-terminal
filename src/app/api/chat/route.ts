@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { createAIClient, getAIConfig } from '@/lib/ai';
+import { createChatCompletion, getAIConfig } from '@/lib/ai';
 import { hasDb, getSession as dbGetSession, insertEvent, insertEventBatch } from '@/lib/db';
 import { createLogger } from '@/lib/log';
 import { selectStageModel } from '@/lib/modelRouting';
 import { buildSignalTerminalChatPrompt } from '@/prompts/signalTerminalChat';
+import { asSessionMeta, evidenceItems, getArtifacts, graphEdges, graphNodes, storyClusters, tapeItems } from '@/lib/session-data';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,8 +55,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
-  const meta = (sessionRow as any).meta || {};
-  const sessionMode: 'fast' | 'deep' = meta?.mode === 'deep' ? 'deep' : 'fast';
+  const meta = asSessionMeta(sessionRow.meta);
+  const sessionMode: 'fast' | 'deep' = meta.mode === 'deep' ? 'deep' : 'fast';
   const chatModel = selectStageModel({
     stage: 'chat',
     mode: sessionMode,
@@ -65,19 +66,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'AI not configured (missing key).' }, { status: 503 });
   }
 
-  const artifacts = meta?.artifacts || {};
-  const evidence = Array.isArray(artifacts?.evidence) ? artifacts.evidence : [];
-  const tape = Array.isArray(artifacts?.tape) ? artifacts.tape : [];
-  const nodes = Array.isArray(artifacts?.nodes) ? artifacts.nodes : [];
-  const edges = Array.isArray(artifacts?.edges) ? artifacts.edges : [];
-  const clusters = Array.isArray(artifacts?.clusters) ? artifacts.clusters : [];
+  const artifacts = getArtifacts(meta);
+  const evidence = evidenceItems(artifacts.evidence);
+  const tape = tapeItems(artifacts.tape);
+  const nodes = graphNodes(artifacts.nodes);
+  const edges = graphEdges(artifacts.edges);
+  const clusters = storyClusters(artifacts.clusters);
 
   const focusEvidenceIds = (body.focusEvidenceIds || []).filter((id) => typeof id === 'string').slice(0, 24);
   const focusEvidence = focusEvidenceIds.length
-    ? evidence.filter((e: any) => focusEvidenceIds.includes(String(e.id))).slice(0, 12)
+    ? evidence.filter((e) => focusEvidenceIds.includes(String(e.id))).slice(0, 12)
     : [];
 
-  const focusEvidenceSlim = focusEvidence.map((e: any) => ({
+  const focusEvidenceSlim = focusEvidence.map((e) => ({
     id: e.id,
     title: e.title,
     source: e.source,
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
     excerpt: truncateText(String(e.excerpt || ''), 520),
   }));
 
-  const evidenceSlim = evidence.slice(0, 18).map((e: any) => ({
+  const evidenceSlim = evidence.slice(0, 18).map((e) => ({
     id: e.id,
     title: e.title,
     source: e.source,
@@ -101,14 +102,14 @@ export async function POST(request: Request) {
       : undefined,
   }));
 
-  const tapeSlim = tape.slice(0, 12).map((t: any) => ({
+  const tapeSlim = tape.slice(0, 12).map((t) => ({
     title: t.title,
     source: t.source,
     evidenceId: t.evidenceId,
     tags: (t.tags || []).slice(0, 6),
   }));
 
-  const clustersSlim = clusters.slice(0, 6).map((c: any) => ({
+  const clustersSlim = clusters.slice(0, 6).map((c) => ({
     title: c.title,
     momentum: c.momentum,
     summary: c.summary,
@@ -128,17 +129,15 @@ export async function POST(request: Request) {
   const system = prompt.system;
   const user = prompt.user;
 
-  const client = createAIClient(cfg);
-  let res: Awaited<ReturnType<typeof client.chat.completions.create>>;
+  let result: Awaited<ReturnType<typeof createChatCompletion>>;
   try {
-    res = await client.chat.completions.create({
-      model: cfg.model,
+    result = await createChatCompletion({
+      config: cfg,
       temperature: 0.2,
-      max_tokens: 650,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
+      maxTokens: 650,
+      cacheTtlMs: 0,
+      system,
+      user,
     });
   } catch (e) {
     const message = safeErrorText(e, 260);
@@ -158,8 +157,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const content = res.choices?.[0]?.message?.content?.trim() || '';
-  const usage = (res as any).usage || {};
+  const content = result.content.trim() || '';
+  const usage = result.usage;
 
   // Persist to trace for demo/debug. (Best-effort)
   await insertEventBatch([
@@ -174,9 +173,9 @@ export async function POST(request: Request) {
       payload: {
         model: cfg.model,
         tag: 'chat',
-        prompt_tokens: usage.prompt_tokens ?? 0,
-        completion_tokens: usage.completion_tokens ?? 0,
-        total_tokens: usage.total_tokens ?? 0,
+        prompt_tokens: usage?.prompt_tokens ?? 0,
+        completion_tokens: usage?.completion_tokens ?? 0,
+        total_tokens: usage?.total_tokens ?? 0,
       },
     },
     {
@@ -190,7 +189,7 @@ export async function POST(request: Request) {
     sessionId: body.sessionId,
     ms: Date.now() - startedAt,
     model: cfg.model,
-    total_tokens: usage.total_tokens ?? 0,
+    total_tokens: usage?.total_tokens ?? 0,
   });
 
   return NextResponse.json(
@@ -199,9 +198,9 @@ export async function POST(request: Request) {
       content,
       usage: {
         model: cfg.model,
-        prompt_tokens: usage.prompt_tokens ?? 0,
-        completion_tokens: usage.completion_tokens ?? 0,
-        total_tokens: usage.total_tokens ?? 0,
+        prompt_tokens: usage?.prompt_tokens ?? 0,
+        completion_tokens: usage?.completion_tokens ?? 0,
+        total_tokens: usage?.total_tokens ?? 0,
       },
     },
     { status: 200 },

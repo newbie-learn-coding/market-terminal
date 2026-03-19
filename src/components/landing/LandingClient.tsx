@@ -65,10 +65,7 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
   }, [router]);
 
   useEffect(() => {
-    if (query.trim()) {
-      setTypedHint('');
-      return;
-    }
+    if (query.trim()) return;
 
     let stopped = false;
     let timer: number | null = null;
@@ -165,7 +162,7 @@ export default function LandingClient({ trendingTopics = [] }: { trendingTopics?
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={typedHint || t('searchPlaceholder')}
+                    placeholder={query.trim() ? t('searchPlaceholder') : typedHint || t('searchPlaceholder')}
                     className="h-11 w-full border-0 bg-transparent text-sm text-white/90 outline-none placeholder:text-white/42"
                     aria-label="Search topic"
                   />

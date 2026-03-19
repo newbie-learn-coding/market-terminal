@@ -207,7 +207,7 @@ export function EvidenceGraph({
     const g = graphRef.current;
     if (!g) return;
 
-    const collide = forceCollide((n: GraphNodeDatum) => collisionRadius(n as unknown as GraphNode));
+    const collide = forceCollide((n) => collisionRadius(n as GraphNode));
     if (typeof (collide as any).iterations === 'function') (collide as any).iterations(15);
     g.d3Force('collide', collide as any);
 

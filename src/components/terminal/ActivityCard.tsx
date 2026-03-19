@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Globe, LayoutDashboard, Layers, Link2, Search, Sparkles, TextQuote, TriangleAlert } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -135,12 +135,6 @@ export function ActivityCard({
   const [focus, setFocus] = useState<StageKey>(() => activeKey || 'plan');
   const [pinnedFocus, setPinnedFocus] = useState(false);
 
-  useEffect(() => {
-    if (pinnedFocus) return;
-    if (!activeKey) return;
-    setFocus(activeKey);
-  }, [activeKey, pinnedFocus]);
-
   const stages = useMemo(() => {
     const base: Array<{ key: StageKey; label: string; icon: LucideIcon }> = [
       { key: 'plan', label: t('pipelinePlan'), icon: Sparkles },
@@ -194,10 +188,12 @@ export function ActivityCard({
     return step.toUpperCase();
   }, [step, t]);
 
+  const activeFocus = pinnedFocus ? focus : activeKey || focus;
+
   const focusDetail = useMemo(() => {
     if (!expanded) return null;
 
-    if (focus === 'plan') {
+    if (activeFocus === 'plan') {
       return (
         <div className="space-y-2">
           <SectionLabel className="mb-0">{t('plannedQueries')}</SectionLabel>
@@ -225,7 +221,7 @@ export function ActivityCard({
       );
     }
 
-    if (focus === 'search') {
+    if (activeFocus === 'search') {
       return (
         <div className="space-y-3">
           <SectionLabel className="mb-0">{t('searchQueries')}</SectionLabel>
@@ -270,7 +266,7 @@ export function ActivityCard({
       );
     }
 
-    if (focus === 'scrape') {
+    if (activeFocus === 'scrape') {
       if (mode !== 'deep') return <div className="text-sm text-white/60">{t('scrapeSkipped')}</div>;
       return (
         <div className="space-y-2">
@@ -296,7 +292,7 @@ export function ActivityCard({
       );
     }
 
-    if (focus === 'extract') {
+    if (activeFocus === 'extract') {
       const uniq = Array.from(new Set((evidenceSources || []).map((s) => String(s || '').trim()).filter(Boolean))).slice(0, 10);
       return (
         <div className="space-y-2">
@@ -317,7 +313,7 @@ export function ActivityCard({
       );
     }
 
-    if (focus === 'link') {
+    if (activeFocus === 'link') {
       const v = graphVariant === 'expanded' ? t('expandedPass') : graphVariant === 'initial' ? t('initialMap') : t('mapVariant');
       return (
         <div className="space-y-2">
@@ -330,7 +326,7 @@ export function ActivityCard({
       );
     }
 
-    if (focus === 'cluster') {
+    if (activeFocus === 'cluster') {
       return (
         <div className="space-y-2">
           <SectionLabel className="mb-0">{t('narrativesLabel')}</SectionLabel>
@@ -354,14 +350,13 @@ export function ActivityCard({
     evidenceCount,
     evidenceSources,
     expanded,
-    focus,
+    activeFocus,
     graphVariant,
     mode,
-    plan?.angles,
-    plan?.queries,
+    plan,
     queryQueue,
     scrapeQueue,
-    search?.results,
+    search,
     summariesCount,
     nodesCount,
     edgesCount,
@@ -369,7 +364,7 @@ export function ActivityCard({
   ]);
 
   return (
-    <Card className={cn('px-3 py-3', className)}>
+    <Card className={cn('px-3 py-3', className)} data-running={running ? '1' : '0'}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -457,7 +452,7 @@ export function ActivityCard({
               className={cn(
                 'flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left hover:bg-white/[0.06]',
                 s.status === 'active' ? 'bg-white/[0.05]' : '',
-                focus === s.key && expanded ? 'ring-1 ring-white/15' : '',
+                activeFocus === s.key && expanded ? 'ring-1 ring-white/15' : '',
               )}
               onClick={() => {
                 setExpanded(true);

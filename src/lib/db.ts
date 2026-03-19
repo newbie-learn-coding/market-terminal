@@ -49,6 +49,39 @@ export type EventRow = {
   created_at: string;
 };
 
+export type CursorPage<T> = {
+  items: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+export type DbSchemaProbe = {
+  ok: boolean;
+  latencyMs: number;
+  missing: string[];
+  present: string[];
+  error?: string;
+};
+
+type SessionCursor = {
+  createdAt: string;
+  sessionId: string;
+};
+
+function encodeCursor(value: Record<string, unknown>): string {
+  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
+}
+
+function decodeCursor<T>(value: string | undefined | null): T | null {
+  if (!value) return null;
+  try {
+    const decoded = Buffer.from(value, 'base64url').toString('utf8');
+    return JSON.parse(decoded) as T;
+  } catch {
+    return null;
+  }
+}
+
 function toSession(row: Record<string, unknown>): SessionRow {
   return {
     sessionId: row.session_id as string,
@@ -213,6 +246,64 @@ export async function listSessions(
   return rows.map(toSession);
 }
 
+export async function listSessionsPage({
+  limit = 50,
+  status,
+  q,
+  cursor,
+}: {
+  limit?: number;
+  status?: string;
+  q?: string;
+  cursor?: string;
+}): Promise<CursorPage<SessionRow>> {
+  const pool = getPool();
+  if (!pool) return { items: [], nextCursor: null, hasMore: false };
+
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  let idx = 1;
+
+  if (status) {
+    conditions.push(`status = $${idx++}`);
+    params.push(status);
+  }
+  if (q && q.trim()) {
+    conditions.push(`topic ILIKE $${idx++}`);
+    params.push(`%${q.trim()}%`);
+  }
+
+  const parsedCursor = decodeCursor<SessionCursor>(cursor);
+  if (parsedCursor?.createdAt && parsedCursor.sessionId) {
+    conditions.push(`(created_at, session_id) < ($${idx++}::timestamptz, $${idx++})`);
+    params.push(parsedCursor.createdAt, parsedCursor.sessionId);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  params.push(limit + 1);
+
+  const { rows } = await pool.query(
+    `SELECT * FROM market_signal.sessions
+     ${where}
+     ORDER BY created_at DESC, session_id DESC
+     LIMIT $${idx}`,
+    params,
+  );
+
+  const mapped = rows.map(toSession);
+  const hasMore = mapped.length > limit;
+  const items = hasMore ? mapped.slice(0, limit) : mapped;
+  const last = items[items.length - 1];
+  const nextCursor = hasMore && last
+    ? encodeCursor({
+        createdAt: new Date(last._creationTime).toISOString(),
+        sessionId: last.sessionId,
+      })
+    : null;
+
+  return { items, nextCursor, hasMore };
+}
+
 export async function listPublished(limit = 200): Promise<SessionRow[]> {
   const pool = getPool();
   if (!pool) return [];
@@ -285,6 +376,45 @@ export async function listEvents(sessionId: string, limit = 250): Promise<EventR
   return rows.map(toEvent);
 }
 
+export async function listEventsPage({
+  sessionId,
+  limit = 250,
+  cursor,
+}: {
+  sessionId: string;
+  limit?: number;
+  cursor?: string;
+}): Promise<CursorPage<EventRow>> {
+  const pool = getPool();
+  if (!pool) return { items: [], nextCursor: null, hasMore: false };
+
+  const parsedCursor = decodeCursor<{ id: number }>(cursor);
+  const params: unknown[] = [sessionId];
+  let where = `WHERE session_id = $1`;
+  if (parsedCursor?.id && Number.isFinite(parsedCursor.id)) {
+    params.push(parsedCursor.id);
+    where += ` AND id > $2`;
+  }
+  params.push(limit + 1);
+  const limitParam = params.length;
+
+  const { rows } = await pool.query(
+    `SELECT * FROM market_signal.session_events
+     ${where}
+     ORDER BY id ASC
+     LIMIT $${limitParam}`,
+    params,
+  );
+
+  const mapped = rows.map(toEvent);
+  const hasMore = mapped.length > limit;
+  const items = hasMore ? mapped.slice(0, limit) : mapped;
+  const last = items[items.length - 1];
+  const nextCursor = hasMore && last ? encodeCursor({ id: last.id }) : null;
+
+  return { items, nextCursor, hasMore };
+}
+
 // ---------------------------------------------------------------------------
 // Cleanup (replaces Convex scheduler TTL)
 // ---------------------------------------------------------------------------
@@ -313,5 +443,48 @@ export async function probeDb(): Promise<{ ok: boolean; latencyMs: number; error
     return { ok: true, latencyMs: Date.now() - start };
   } catch (e) {
     return { ok: false, latencyMs: Date.now() - start, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function probeDbSchema(): Promise<DbSchemaProbe> {
+  const pool = getPool();
+  if (!pool) return { ok: false, latencyMs: 0, missing: ['database_url'], present: [], error: 'missing-url' };
+
+  const requiredRelations = [
+    'market_signal.sessions',
+    'market_signal.session_events',
+    'market_signal.idx_sessions_slug',
+    'market_signal.idx_sessions_asset',
+    'market_signal.idx_sessions_created_session',
+    'market_signal.idx_sessions_status_created_session',
+    'market_signal.idx_events_session',
+    'market_signal.idx_events_session_id',
+  ];
+
+  const startedAt = Date.now();
+  try {
+    const { rows } = await pool.query<{ name: string; exists: string | null }>(
+      `SELECT item.name, to_regclass(item.name) AS exists
+       FROM unnest($1::text[]) AS item(name)`,
+      [requiredRelations],
+    );
+
+    const present = rows.filter((row) => row.exists).map((row) => row.name);
+    const missing = rows.filter((row) => !row.exists).map((row) => row.name);
+
+    return {
+      ok: missing.length === 0,
+      latencyMs: Date.now() - startedAt,
+      missing,
+      present,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      latencyMs: Date.now() - startedAt,
+      missing: requiredRelations,
+      present: [],
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
 }

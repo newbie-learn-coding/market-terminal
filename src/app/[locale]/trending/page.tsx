@@ -11,6 +11,7 @@ import { SectionLabel } from '@/components/ui/section-label';
 import { SentimentBadge } from '@/components/ui/sentiment-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/Button';
+import { firstEvidenceSentiment } from '@/lib/session-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,11 +81,7 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
       const ak = s.assetKey as string | undefined;
       if (!ak) continue;
 
-      const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
-      let sentiment: string | null = null;
-      for (const ev of evidence) {
-        if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
-      }
+      const sentiment = firstEvidenceSentiment(s.meta);
 
       const existing = grouped.get(ak);
       if (!existing) {
@@ -115,11 +112,7 @@ export default async function TrendingPage({ params }: { params: Promise<{ local
       .sort((a, b) => b._creationTime - a._creationTime)
       .slice(0, 12)
       .map((s) => {
-        const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
-        let sentiment: string | null = null;
-        for (const ev of evidence) {
-          if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
-        }
+        const sentiment = firstEvidenceSentiment(s.meta);
         return { slug: s.slug!, topic: s.topic, date: s._creationTime, sentiment };
       });
   }

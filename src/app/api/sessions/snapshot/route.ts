@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { hasDb, getSession, patchMeta, insertEventBatch } from '@/lib/db';
 import { createLogger } from '@/lib/log';
+import { getArtifacts } from '@/lib/session-data';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,16 +47,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
-  const prevArtifacts = asObject((session.meta as any)?.artifacts);
+  const prevArtifacts = asObject(getArtifacts(session.meta));
   const nextArtifacts: Record<string, unknown> = { ...prevArtifacts };
   if (price !== undefined) nextArtifacts.price = price;
   if (videos !== undefined) nextArtifacts.videos = videos;
 
   try {
     await patchMeta(sessionId, { artifacts: nextArtifacts });
-  } catch (e: any) {
-    log.error('sessions.snapshot.update_failed', { sessionId, error: e?.message, ms: Date.now() - startedAt });
-    return NextResponse.json({ error: e?.message || 'update failed' }, { status: 500 });
+  } catch (e) {
+    const error = e instanceof Error ? e.message : 'update failed';
+    log.error('sessions.snapshot.update_failed', { sessionId, error, ms: Date.now() - startedAt });
+    return NextResponse.json({ error }, { status: 500 });
   }
 
   const events: Array<{ sessionId: string; type: string; payload: unknown }> = [];
@@ -63,8 +65,9 @@ export async function POST(request: Request) {
   if (videos !== undefined) events.push({ sessionId, type: 'videos.snapshot', payload: videos });
 
   if (events.length) {
-    await insertEventBatch(events).catch((e: any) => {
-      log.warn('sessions.snapshot.event_insert_failed', { sessionId, error: e?.message });
+    await insertEventBatch(events).catch((e) => {
+      const error = e instanceof Error ? e.message : 'event insert failed';
+      log.warn('sessions.snapshot.event_insert_failed', { sessionId, error });
     });
   }
 

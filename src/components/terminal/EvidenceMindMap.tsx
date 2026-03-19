@@ -30,6 +30,43 @@ type MindThread = {
   bestEdgeByType: Partial<Record<GraphEdge['type'], GraphEdge>>;
 };
 
+function BranchCard({
+  title,
+  icon,
+  items,
+  emptyHint,
+  itemType,
+  renderNodeChip,
+}: {
+  title: string;
+  icon: ReactNode;
+  items: string[];
+  emptyHint: string;
+  itemType: NodeType;
+  renderNodeChip: (id: string, typeHint?: NodeType) => ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-white/70">
+          <span className="text-white/60">{icon}</span>
+          {title}
+        </div>
+        <Badge className="mono">{items.length}</Badge>
+      </div>
+      <div className="mt-2 space-y-2">
+        {items.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/60">
+            {emptyHint}
+          </div>
+        ) : (
+          items.map((id) => renderNodeChip(id, itemType))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function EvidenceMindMap({
   topic,
   nodes,
@@ -270,41 +307,6 @@ export function EvidenceMindMap({
     );
   };
 
-  const BranchCard = ({
-    title,
-    icon,
-    items,
-    emptyHint,
-    itemType,
-  }: {
-    title: string;
-    icon: ReactNode;
-    items: string[];
-    emptyHint: string;
-    itemType: NodeType;
-  }) => {
-    return (
-      <div className="rounded-2xl border border-white/10 bg-black/15 p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-white/70">
-            <span className="text-white/60">{icon}</span>
-            {title}
-          </div>
-          <Badge className="mono">{items.length}</Badge>
-        </div>
-        <div className="mt-2 space-y-2">
-          {items.length === 0 ? (
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/60">
-              {emptyHint}
-            </div>
-          ) : (
-            items.map((id) => renderNodeChip(id, itemType))
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Card className={cn('relative overflow-hidden', className)}>
       <div className="pointer-events-none absolute inset-0 grid-overlay opacity-70" />
@@ -476,6 +478,7 @@ export function EvidenceMindMap({
                   items={data.branch.events}
                   emptyHint={t('noEventNodes')}
                   itemType="event"
+                  renderNodeChip={renderNodeChip}
                 />
                 <BranchCard
                   title={t('actors')}
@@ -483,6 +486,7 @@ export function EvidenceMindMap({
                   items={data.branch.actors}
                   emptyHint={t('noActorNodes')}
                   itemType="entity"
+                  renderNodeChip={renderNodeChip}
                 />
                 <BranchCard
                   title={t('sources')}
@@ -490,6 +494,7 @@ export function EvidenceMindMap({
                   items={data.branch.sources}
                   emptyHint={t('noSourcesLinked')}
                   itemType="source"
+                  renderNodeChip={renderNodeChip}
                 />
                 <BranchCard
                   title={t('spillovers')}
@@ -497,6 +502,7 @@ export function EvidenceMindMap({
                   items={data.branch.spillovers}
                   emptyHint={t('noSpilloverAssets')}
                   itemType="asset"
+                  renderNodeChip={renderNodeChip}
                 />
                 <BranchCard
                   title={t('media')}
@@ -504,6 +510,7 @@ export function EvidenceMindMap({
                   items={data.branch.media}
                   emptyHint={t('noMediaNodes')}
                   itemType="media"
+                  renderNodeChip={renderNodeChip}
                 />
               </div>
             </div>
@@ -683,4 +690,3 @@ export function EvidenceMindMap({
     </Card>
   );
 }
-

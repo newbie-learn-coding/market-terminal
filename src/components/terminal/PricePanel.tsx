@@ -327,24 +327,25 @@ export function PricePanel({
 }) {
   const t = useTranslations('workspace');
   const isEmpty = !session;
+  const sessionTopic = session?.topic ?? '';
 
   const comparePresets = useMemo(() => {
-    const key = normalizeTopicKey(session?.topic || '');
+    const key = normalizeTopicKey(sessionTopic);
     return PRICE_COMPARE_PRESETS.filter((p) => normalizeTopicKey(p.topic) !== key);
-  }, [session?.topic]);
+  }, [sessionTopic]);
 
   const compareSeries = priceCompare?.series.length ? priceCompare.series : null;
   const compareTimestamps = priceCompare?.timestamps.length ? priceCompare.timestamps : undefined;
 
   const chartLinks = useMemo(() => {
-    if (!session?.topic) return null;
-    const clean = session.topic.trim();
+    if (!sessionTopic) return null;
+    const clean = sessionTopic.trim();
     const tvSymbol = tradingViewSymbolForTopic(clean);
     return {
       tradingView: `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}`,
       google: `https://www.google.com/search?q=${encodeURIComponent(`${clean} price chart`)}`,
     };
-  }, [session?.topic]);
+  }, [sessionTopic]);
 
   return (
     <Card>

@@ -2,11 +2,25 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 
 import { env } from '@/lib/env';
+import { buildCacheKey, getOrComputeCached } from '@/lib/server-cache';
+import { normalizeProviderError } from '@/lib/provider-error';
 
 export type AIConfig = {
   apiKey: string;
   baseURL: string;
   model: string;
+};
+
+type AIUsage = {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  total_tokens?: number;
+};
+
+type AIChatResult = {
+  content: string;
+  usage?: AIUsage;
+  finishReason?: string | null;
 };
 
 function normalizeMessageContent(content: unknown): string {
@@ -341,6 +355,67 @@ export function createAIClient(config: AIConfig) {
   });
 }
 
+export async function createChatCompletion({
+  config,
+  system,
+  user,
+  temperature = 0.2,
+  maxTokens,
+  cacheTtlMs = 5 * 60_000,
+  jsonObject = false,
+}: {
+  config: AIConfig;
+  system: string;
+  user: string;
+  temperature?: number;
+  maxTokens?: number;
+  cacheTtlMs?: number;
+  jsonObject?: boolean;
+}): Promise<AIChatResult> {
+  const client = createAIClient(config);
+  const cacheKey = buildCacheKey([
+    'openrouter.chat',
+    config.baseURL,
+    config.model,
+    temperature,
+    maxTokens || '',
+    jsonObject ? 'json' : 'text',
+    system,
+    user,
+  ]);
+
+  return getOrComputeCached({
+    key: cacheKey,
+    ttlMs: cacheTtlMs,
+    loader: async () => {
+      try {
+        const res = await client.chat.completions.create({
+          model: config.model,
+          temperature,
+          ...(typeof maxTokens === 'number' ? { max_tokens: maxTokens } : null),
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+          ...(jsonObject ? { response_format: { type: 'json_object' } as any } : null),
+        });
+
+        return {
+          content: normalizeMessageContent(res.choices?.[0]?.message?.content || ''),
+          usage: {
+            prompt_tokens: res.usage?.prompt_tokens,
+            completion_tokens: res.usage?.completion_tokens,
+            total_tokens: res.usage?.total_tokens,
+          },
+          finishReason: res.choices?.[0]?.finish_reason || null,
+        };
+      } catch (e) {
+        throw normalizeProviderError('openrouter', e, 'AI request failed');
+      }
+    },
+  });
+}
+
 export async function chatJson<TSchema extends z.ZodTypeAny>({
   config,
   schema,
@@ -365,28 +440,24 @@ export async function chatJson<TSchema extends z.ZodTypeAny>({
     }) => void;
   };
 }): Promise<z.infer<TSchema>> {
-  const client = createAIClient(config);
-  const res = await client.chat.completions.create({
-    model: config.model,
+  const result = await createChatCompletion({
+    config,
+    system,
+    user,
     temperature,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user },
-    ],
-    // Some gateways may ignore this. We still validate strictly.
-    response_format: { type: 'json_object' } as any,
+    jsonObject: true,
   });
 
   telemetry?.onUsage?.({
     model: config.model,
     tag: telemetry.tag,
-    prompt_tokens: (res as any).usage?.prompt_tokens,
-    completion_tokens: (res as any).usage?.completion_tokens,
-    total_tokens: (res as any).usage?.total_tokens,
+    prompt_tokens: result.usage?.prompt_tokens,
+    completion_tokens: result.usage?.completion_tokens,
+    total_tokens: result.usage?.total_tokens,
   });
 
-  const finishReason = (res as any).choices?.[0]?.finish_reason || 'unknown';
-  const rawContent = normalizeMessageContent(res.choices?.[0]?.message?.content || '{}');
+  const finishReason = result.finishReason || 'unknown';
+  const rawContent = result.content || '{}';
   const cleanedRaw = normalizeJsonQuotes(stripUnicodeNoise(rawContent));
   const unique = (arr: string[]) => arr.filter((v, idx) => v && arr.indexOf(v) === idx);
   const baseCandidates = unique([

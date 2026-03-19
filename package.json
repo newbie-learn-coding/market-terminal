@@ -10,6 +10,11 @@
     "deploy:cf": "npx wrangler pages deploy",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cleanup:sessions": "node scripts/cleanup-expired-sessions.mjs",
+    "schema:apply": "node scripts/apply-schema.mjs",
     "keyword-research": "npx tsx scripts/keyword-research.ts"
   },
   "dependencies": {
@@ -45,6 +50,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "5.9.3"
+    "tsx": "^4.20.3",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
   }
 }

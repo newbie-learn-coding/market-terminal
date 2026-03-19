@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { SentimentBadge } from '@/components/ui/sentiment-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/Button';
+import { firstEvidenceSentiment } from '@/lib/session-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,20 +56,13 @@ export default async function AssetIndexPage({ params }: { params: Promise<{ loc
 
     const existing = grouped.get(ak);
     if (!existing) {
-      const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
-      let sentiment: string | null = null;
-      for (const ev of evidence) {
-        if (ev.aiSummary?.sentiment) { sentiment = ev.aiSummary.sentiment; break; }
-      }
+      const sentiment = firstEvidenceSentiment(s.meta);
       grouped.set(ak, { count: 1, latestDate: s._creationTime, latestSentiment: sentiment });
     } else {
       existing.count += 1;
       if (s._creationTime > existing.latestDate) {
         existing.latestDate = s._creationTime;
-        const evidence = (s.meta as any)?.artifacts?.evidence ?? [];
-        for (const ev of evidence) {
-          if (ev.aiSummary?.sentiment) { existing.latestSentiment = ev.aiSummary.sentiment; break; }
-        }
+        existing.latestSentiment = firstEvidenceSentiment(s.meta);
       }
     }
   }
